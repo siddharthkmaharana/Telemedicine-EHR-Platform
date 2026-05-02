@@ -1,0 +1,50 @@
+{
+  "name": "AuditLog",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string"
+    },
+    "user_role": {
+      "type": "string",
+      "enum": [
+        "patient",
+        "doctor",
+        "admin"
+      ]
+    },
+    "action": {
+      "type": "string",
+      "enum": [
+        "READ",
+        "WRITE",
+        "DELETE",
+        "LOGIN",
+        "LOGOUT",
+        "EXPORT"
+      ]
+    },
+    "resource_type": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "ip_address": {
+      "type": "string"
+    },
+    "is_phi": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "user_email",
+    "user_role",
+    "action",
+    "resource_type"
+  ]
+}

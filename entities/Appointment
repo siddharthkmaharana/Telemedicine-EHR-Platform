@@ -1,0 +1,63 @@
+{
+    "name": "Appointment",
+    "type": "object",
+    "properties": {
+        "patient_email": {
+            "type": "string"
+        },
+        "patient_name": {
+            "type": "string"
+        },
+        "doctor_email": {
+            "type": "string"
+        },
+        "doctor_name": {
+            "type": "string"
+        },
+        "doctor_specialization": {
+            "type": "string"
+        },
+        "start_time": {
+            "type": "string"
+        },
+        "end_time": {
+            "type": "string"
+        },
+        "date": {
+            "type": "string",
+            "format": "date"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "confirmed",
+                "completed",
+                "cancelled"
+            ],
+            "default": "pending"
+        },
+        "room_token": {
+            "type": "string"
+        },
+        "notes": {
+            "type": "string"
+        },
+        "chief_complaint": {
+            "type": "string"
+        },
+        "diagnosis": {
+            "type": "string"
+        },
+        "duration_minutes": {
+            "type": "number",
+            "default": 30
+        }
+    },
+    "required": [
+        "patient_email",
+        "doctor_email",
+        "start_time",
+        "date"
+    ]
+}

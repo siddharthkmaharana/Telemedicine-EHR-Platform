@@ -1,0 +1,58 @@
+{
+    "name": "Doctor",
+    "type": "object",
+    "properties": {
+        "user_email": {
+            "type": "string"
+        },
+        "full_name": {
+            "type": "string"
+        },
+        "specialization": {
+            "type": "string"
+        },
+        "license_id": {
+            "type": "string"
+        },
+        "bio": {
+            "type": "string"
+        },
+        "consultation_fee": {
+            "type": "number"
+        },
+        "rating": {
+            "type": "number"
+        },
+        "is_active": {
+            "type": "boolean",
+            "default": true
+        },
+        "available_today": {
+            "type": "boolean",
+            "default": true
+        },
+        "avatar_url": {
+            "type": "string"
+        },
+        "phone": {
+            "type": "string"
+        },
+        "availability_slots": {
+            "type": "string"
+        },
+        "experience_years": {
+            "type": "number"
+        },
+        "total_patients": {
+            "type": "number"
+        },
+        "certificate_url": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "user_email",
+        "full_name",
+        "specialization"
+    ]
+}

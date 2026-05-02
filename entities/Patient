@@ -1,0 +1,66 @@
+{
+    "name": "Patient",
+    "type": "object",
+    "properties": {
+        "user_email": {
+            "type": "string"
+        },
+        "full_name": {
+            "type": "string"
+        },
+        "dob": {
+            "type": "string",
+            "format": "date"
+        },
+        "blood_group": {
+            "type": "string",
+            "enum": [
+                "A+",
+                "A-",
+                "B+",
+                "B-",
+                "AB+",
+                "AB-",
+                "O+",
+                "O-"
+            ]
+        },
+        "allergies": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "emergency_contact_name": {
+            "type": "string"
+        },
+        "emergency_contact_phone": {
+            "type": "string"
+        },
+        "last_vitals_bp": {
+            "type": "string"
+        },
+        "last_vitals_pulse": {
+            "type": "string"
+        },
+        "last_vitals_temp": {
+            "type": "string"
+        },
+        "last_vitals_weight": {
+            "type": "string"
+        },
+        "avatar_url": {
+            "type": "string"
+        },
+        "phone": {
+            "type": "string"
+        },
+        "address": {
+            "type": "string"
+        }
+    },
+    "required": [
+        "user_email",
+        "full_name"
+    ]
+}

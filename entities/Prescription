@@ -1,0 +1,57 @@
+{
+    "name": "Prescription",
+    "type": "object",
+    "properties": {
+        "patient_email": {
+            "type": "string"
+        },
+        "patient_name": {
+            "type": "string"
+        },
+        "doctor_email": {
+            "type": "string"
+        },
+        "doctor_name": {
+            "type": "string"
+        },
+        "doctor_specialization": {
+            "type": "string"
+        },
+        "appointment_id": {
+            "type": "string"
+        },
+        "diagnosis_summary": {
+            "type": "string"
+        },
+        "medications": {
+            "type": "string"
+        },
+        "additional_instructions": {
+            "type": "string"
+        },
+        "signature_hash": {
+            "type": "string"
+        },
+        "qr_payload": {
+            "type": "string"
+        },
+        "issued_date": {
+            "type": "string",
+            "format": "date"
+        },
+        "status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "expired",
+                "cancelled"
+            ],
+            "default": "active"
+        }
+    },
+    "required": [
+        "patient_email",
+        "doctor_email",
+        "issued_date"
+    ]
+}

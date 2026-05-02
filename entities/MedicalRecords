@@ -1,0 +1,59 @@
+{
+    "name": "MedicalRecord",
+    "type": "object",
+    "properties": {
+        "patient_email": {
+            "type": "string"
+        },
+        "patient_name": {
+            "type": "string"
+        },
+        "doctor_email": {
+            "type": "string"
+        },
+        "doctor_name": {
+            "type": "string"
+        },
+        "doctor_specialization": {
+            "type": "string"
+        },
+        "appointment_id": {
+            "type": "string"
+        },
+        "chief_complaint": {
+            "type": "string"
+        },
+        "diagnosis": {
+            "type": "string"
+        },
+        "treatment_plan": {
+            "type": "string"
+        },
+        "notes": {
+            "type": "string"
+        },
+        "attachments": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "visit_date": {
+            "type": "string",
+            "format": "date"
+        },
+        "follow_up_date": {
+            "type": "string",
+            "format": "date"
+        },
+        "is_encrypted": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "required": [
+        "patient_email",
+        "doctor_email",
+        "visit_date"
+    ]
+}
