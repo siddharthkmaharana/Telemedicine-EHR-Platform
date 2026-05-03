@@ -4,6 +4,7 @@ import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import { MediSyncProvider } from '@/lib/MediSyncContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 // Role Select (login page)
@@ -39,20 +40,9 @@ import AuditLogs from './pages/admin/AuditLogs';
 import AdminSettings from './pages/admin/AdminSettings';
 
 const AuthenticatedApp = () => {
-    const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
-
-    if (isLoadingPublicSettings || isLoadingAuth) {
-        return (
-            <div className="fixed inset-0 flex items-center justify-center" style={{ background: '#070B14' }}>
-                <div className="w-8 h-8 border-2 border-[rgba(0,217,184,0.3)] border-t-[#00D9B8] rounded-full animate-spin" />
-            </div>
-        );
-    }
-
-    if (authError) {
-        if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
-        if (authError.type === 'auth_required') { navigateToLogin(); return null; }
-    }
+    // We are keeping AuthProvider to avoid breaking anything that depends on it,
+    // but the actual auth data is currently driven by MediSyncContext.
+    // We bypass the Base44 auth loading state if it errors.
 
     return (
         <Routes>
@@ -100,12 +90,14 @@ const AuthenticatedApp = () => {
 function App() {
     return (
         <AuthProvider>
-            <QueryClientProvider client={queryClientInstance}>
-                <Router>
-                    <AuthenticatedApp />
-                </Router>
-                <Toaster />
-            </QueryClientProvider>
+            <MediSyncProvider>
+                <QueryClientProvider client={queryClientInstance}>
+                    <Router>
+                        <AuthenticatedApp />
+                    </Router>
+                    <Toaster />
+                </QueryClientProvider>
+            </MediSyncProvider>
         </AuthProvider>
     )
 }

@@ -32,6 +32,7 @@ export function MediSyncProvider({ children }) {
     const logout = () => {
         setCurrentUser(null);
         localStorage.removeItem('medisync_user');
+        window.location.href = '/';
     };
 
     return (
