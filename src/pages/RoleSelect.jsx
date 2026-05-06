@@ -39,7 +39,7 @@ export default function RoleSelect() {
         }
         if (!role) { setError('User not found'); setLoading(false); return; }
         if (passwordVal !== 'Demo@123') { setError('Invalid password'); setLoading(false); return; }
-        const userData = { email: emailVal, role, name: role === 'patient' ? 'Ajay Sharma' : role === 'doctor' ? 'Dr. Samay Shukla' : 'System Admin' };
+        const userData = { email: emailVal, role, name: role === 'patient' ? 'Siddharth kumar Maharana' : role === 'doctor' ? 'Dr. Samay Shukla' : 'System Admin' };
         localStorage.setItem('medisync_user', JSON.stringify(userData));
         navigate(`/${role}`);
     };

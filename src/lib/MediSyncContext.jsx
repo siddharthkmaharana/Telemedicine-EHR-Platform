@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const MediSyncContext = createContext(null);
 
 const DEMO_USERS = {
-    'patient@medisync.com': { role: 'patient', name: 'Ajay Sharma', password: 'Demo@123' },
+    'patient@medisync.com': { role: 'patient', name: 'Siddharth kumar Maharana', password: 'Demo@123' },
     'doctor@medisync.com': { role: 'doctor', name: 'Dr. Samay Shukla', password: 'Demo@123' },
     'admin@medisync.com': { role: 'admin', name: 'System Admin', password: 'Demo@123' },
 };

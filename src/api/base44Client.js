@@ -16,12 +16,12 @@ const realClient = createClient({
 // Mock data for demo purposes since the real backend is disconnected
 let mockData = {
     Appointment: [
-        { id: '1', patient_name: 'Ajay Sharma', patient_email: 'patient@medisync.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], start_time: '09:00', status: 'confirmed' },
+        { id: '1', patient_name: 'Siddharth kumar Maharana', patient_email: 'patient@medisync.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], start_time: '09:00', status: 'confirmed' },
         { id: '2', patient_name: 'Rahul Verma', patient_email: 'rahul@example.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], start_time: '10:00', status: 'pending' },
         { id: '3', patient_name: 'Sneha Patel', patient_email: 'sneha@example.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], start_time: '14:00', status: 'pending' },
     ],
     Prescription: [
-        { id: '1', patient_name: 'Ajay Sharma', patient_email: 'patient@medisync.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], medications: 'Paracetamol 500mg\nAmoxicillin 250mg' },
+        { id: '1', patient_name: 'Siddharth kumar Maharana', patient_email: 'patient@medisync.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], medications: 'Paracetamol 500mg\nAmoxicillin 250mg' },
         { id: '2', patient_name: 'Rahul Verma', patient_email: 'rahul@example.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date(Date.now() - 86400000).toISOString().split('T')[0], medications: 'Ibuprofen 400mg' },
     ],
     MedicalRecords: [
@@ -32,11 +32,11 @@ let mockData = {
         { id: '1', email: 'doctor@medisync.com', name: 'Dr. Samay Shukla', specialty: 'General Physician', experience: 10, rating: 4.8 }
     ],
     Patient: [
-        { id: '1', email: 'patient@medisync.com', name: 'Ajay Sharma', age: 32, gender: 'Male', blood_group: 'O+' }
+        { id: '1', email: 'patient@medisync.com', name: 'Siddharth kumar Maharana', age: 32, gender: 'Male', blood_group: 'O+' }
     ],
     AuditLog: [
         { id: '1', timestamp: new Date().toISOString(), user: 'admin@medisync.com', role: 'admin', action: 'LOGIN', resource: 'System', description: 'Admin logged in', is_phi: false },
-        { id: '2', timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'doctor@medisync.com', role: 'doctor', action: 'READ', resource: 'Patient Record', description: 'Viewed patient Ajay Sharma history', is_phi: true }
+        { id: '2', timestamp: new Date(Date.now() - 3600000).toISOString(), user: 'doctor@medisync.com', role: 'doctor', action: 'READ', resource: 'Patient Record', description: 'Viewed patient Siddharth kumar Maharana history', is_phi: true }
     ],
     ClinicSettings: []
 };
