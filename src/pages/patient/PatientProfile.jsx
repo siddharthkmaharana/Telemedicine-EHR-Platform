@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Save, Shield, Clock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 
 export default function PatientProfile() {
     const [patient, setPatient] = useState(null);
@@ -11,7 +11,7 @@ export default function PatientProfile() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        base44.entities.Patient.filter({ user_email: user.email }).then(pts => {
+        mockClient.entities.Patient.filter({ user_email: user.email }).then(pts => {
             setPatient(pts[0] || { user_email: user.email, full_name: user.name, blood_group: 'O+', allergies: ['Penicillin'] });
             setLoading(false);
         });
@@ -20,9 +20,9 @@ export default function PatientProfile() {
     const save = async () => {
         setSaving(true);
         if (patient.id) {
-            await base44.entities.Patient.update(patient.id, patient);
+            await mockClient.entities.Patient.update(patient.id, patient);
         } else {
-            const created = await base44.entities.Patient.create(patient);
+            const created = await mockClient.entities.Patient.create(patient);
             setPatient(created);
         }
         setSaving(false);

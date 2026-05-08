@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 
@@ -13,11 +13,11 @@ export default function AdminAppointments() {
     const [selected, setSelected] = useState(null);
 
     useEffect(() => {
-        base44.entities.Appointment.list('-created_date').then(a => { setAppointments(a); setLoading(false); });
+        mockClient.entities.Appointment.list('-created_date').then(a => { setAppointments(a); setLoading(false); });
     }, []);
 
     const cancelAppointment = async (id) => {
-        await base44.entities.Appointment.update(id, { status: 'cancelled' });
+        await mockClient.entities.Appointment.update(id, { status: 'cancelled' });
         setAppointments(a => a.map(appt => appt.id === id ? { ...appt, status: 'cancelled' } : appt));
         setSelected(null);
     };

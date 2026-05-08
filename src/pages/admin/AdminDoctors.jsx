@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, X, Star } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 
@@ -16,18 +16,18 @@ export default function AdminDoctors() {
     const [newDoc, setNewDoc] = useState({ full_name: '', specialization: 'Cardiology', license_id: '', consultation_fee: 500, is_active: true, rating: 4.5, experience_years: 5 });
 
     useEffect(() => {
-        base44.entities.Doctor.list().then(d => { setDoctors(d); setLoading(false); });
+        mockClient.entities.Doctor.list().then(d => { setDoctors(d); setLoading(false); });
     }, []);
 
     const addDoctor = async () => {
-        const created = await base44.entities.Doctor.create({ ...newDoc, user_email: `doctor${Date.now()}@medisync.com`, available_today: true });
+        const created = await mockClient.entities.Doctor.create({ ...newDoc, user_email: `doctor${Date.now()}@medisync.com`, available_today: true });
         setDoctors(d => [created, ...d]);
         setShowAdd(false);
         setNewDoc({ full_name: '', specialization: 'Cardiology', license_id: '', consultation_fee: 500, is_active: true, rating: 4.5, experience_years: 5 });
     };
 
     const toggleStatus = async (doc) => {
-        await base44.entities.Doctor.update(doc.id, { is_active: !doc.is_active });
+        await mockClient.entities.Doctor.update(doc.id, { is_active: !doc.is_active });
         setDoctors(d => d.map(item => item.id === doc.id ? { ...item, is_active: !item.is_active } : item));
         setConfirmDeactivate(null);
     };

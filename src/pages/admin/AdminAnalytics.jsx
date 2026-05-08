@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
@@ -25,9 +25,9 @@ export default function AdminAnalytics() {
 
     useEffect(() => {
         Promise.all([
-            base44.entities.Appointment.list(),
-            base44.entities.Doctor.list(),
-            base44.entities.Prescription.list(),
+            mockClient.entities.Appointment.list(),
+            mockClient.entities.Doctor.list(),
+            mockClient.entities.Prescription.list(),
         ]).then(([a, d, p]) => { setAppointments(a); setDoctors(d); setPrescriptions(p); });
     }, []);
 

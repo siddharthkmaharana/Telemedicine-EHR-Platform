@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Upload } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 
 const SPECIALIZATIONS = ['Cardiology', 'Dermatology', 'General Medicine', 'Neurology', 'Orthopedics', 'Pediatrics', 'Gynecology', 'Psychiatry', 'Ophthalmology', 'ENT'];
 
@@ -13,7 +13,7 @@ export default function DoctorProfile() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        base44.entities.Doctor.filter({ user_email: user.email }).then(docs => {
+        mockClient.entities.Doctor.filter({ user_email: user.email }).then(docs => {
             setDoctor(docs[0] || {
                 user_email: user.email, full_name: user.name,
                 specialization: 'Cardiology', license_id: 'MCI/2024/001',
@@ -27,8 +27,8 @@ export default function DoctorProfile() {
 
     const save = async () => {
         setSaving(true);
-        if (doctor.id) await base44.entities.Doctor.update(doctor.id, doctor);
-        else { const d = await base44.entities.Doctor.create(doctor); setDoctor(d); }
+        if (doctor.id) await mockClient.entities.Doctor.update(doctor.id, doctor);
+        else { const d = await mockClient.entities.Doctor.create(doctor); setDoctor(d); }
         setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
     };
 

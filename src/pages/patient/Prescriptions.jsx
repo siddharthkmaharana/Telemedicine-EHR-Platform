@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Pill, Download, QrCode } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 
@@ -12,7 +12,7 @@ export default function Prescriptions() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        base44.entities.Prescription.filter({ patient_email: user.email })
+        mockClient.entities.Prescription.filter({ patient_email: user.email })
             .then(r => { setPrescriptions(r); setLoading(false); });
     }, []);
 

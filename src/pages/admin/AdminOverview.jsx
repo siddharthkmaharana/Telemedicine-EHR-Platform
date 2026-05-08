@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, UserCheck, Calendar, Video, FileText, Activity } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatCard from '@/components/medisync/StatCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { format, subDays } from 'date-fns';
@@ -28,11 +28,11 @@ export default function AdminOverview() {
 
     useEffect(() => {
         Promise.all([
-            base44.entities.Patient.list(),
-            base44.entities.Doctor.list(),
-            base44.entities.Appointment.list(),
-            base44.entities.Prescription.list(),
-            base44.entities.AuditLog.list('-created_date', 10),
+            mockClient.entities.Patient.list(),
+            mockClient.entities.Doctor.list(),
+            mockClient.entities.Appointment.list(),
+            mockClient.entities.Prescription.list(),
+            mockClient.entities.AuditLog.list('-created_date', 10),
         ]).then(([pts, docs, appts, rxs, logs]) => {
             setPatients(pts); setDoctors(docs); setAppointments(appts);
             setPrescriptions(rxs); setAuditLogs(logs); setLoading(false);

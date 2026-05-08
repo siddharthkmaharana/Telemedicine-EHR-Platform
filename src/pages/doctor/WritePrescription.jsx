@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, FileText, Download, CheckCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 
 const FREQ_OPTIONS = ['Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 'As needed', 'Weekly'];
 const DURATION_OPTIONS = ['3 days', '5 days', '7 days', '10 days', '14 days', '21 days', '30 days', 'Ongoing'];
@@ -27,8 +27,8 @@ export default function WritePrescription() {
         const apptId = params.get('appt');
 
         Promise.all([
-            base44.entities.Appointment.filter({ doctor_email: user.email, status: 'completed' }),
-            base44.entities.Patient.list(),
+            mockClient.entities.Appointment.filter({ doctor_email: user.email, status: 'completed' }),
+            mockClient.entities.Patient.list(),
         ]).then(([appts, pts]) => {
             setAppointments(appts);
             setPatients(pts);
@@ -48,7 +48,7 @@ export default function WritePrescription() {
         if (!selectedPatient || !diagnosis || medications.every(m => !m.drug_name)) return;
         setSaving(true);
         const hash = `SHA256:${Math.random().toString(36).slice(2).toUpperCase()}`;
-        await base44.entities.Prescription.create({
+        await mockClient.entities.Prescription.create({
             patient_email: selectedPatient.patient_email,
             patient_name: selectedPatient.patient_name,
             doctor_email: user.email,

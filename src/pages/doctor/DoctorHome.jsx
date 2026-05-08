@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Users, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatCard from '@/components/medisync/StatCard';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
@@ -18,8 +18,8 @@ export default function DoctorHome() {
 
     useEffect(() => {
         Promise.all([
-            base44.entities.Appointment.filter({ doctor_email: user.email }),
-            base44.entities.Prescription.filter({ doctor_email: user.email }),
+            mockClient.entities.Appointment.filter({ doctor_email: user.email }),
+            mockClient.entities.Prescription.filter({ doctor_email: user.email }),
         ]).then(([appts, rxs]) => {
             setAppointments(appts);
             setPrescriptions(rxs);
@@ -32,7 +32,7 @@ export default function DoctorHome() {
     const uniquePatients = new Set(appointments.map(a => a.patient_email)).size;
 
     const updateStatus = async (id, status) => {
-        await base44.entities.Appointment.update(id, { status });
+        await mockClient.entities.Appointment.update(id, { status });
         setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
     };
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Video, Mic, MicOff, VideoOff, PhoneOff, MessageSquare, Clock, Wifi } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -152,7 +152,7 @@ export default function VideoConsultation() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        base44.entities.Appointment.filter({ patient_email: user.email })
+        mockClient.entities.Appointment.filter({ patient_email: user.email })
             .then(appts => {
                 setAppointments(appts.filter(a => a.status === 'confirmed'));
                 setLoading(false);
