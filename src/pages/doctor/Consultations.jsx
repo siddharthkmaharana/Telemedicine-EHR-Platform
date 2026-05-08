@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronDown, X, FileText } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 import { useNavigate } from 'react-router-dom';
@@ -18,8 +18,8 @@ export default function Consultations() {
 
     useEffect(() => {
         Promise.all([
-            base44.entities.Appointment.filter({ doctor_email: user.email }),
-            base44.entities.MedicalRecord.filter({ doctor_email: user.email }),
+            mockClient.entities.Appointment.filter({ doctor_email: user.email }),
+            mockClient.entities.MedicalRecord.filter({ doctor_email: user.email }),
         ]).then(([appts, recs]) => {
             setAppointments(appts.sort((a, b) => b.date?.localeCompare(a.date)));
             setRecords(recs);

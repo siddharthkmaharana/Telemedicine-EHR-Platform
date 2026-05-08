@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import { format, addDays, startOfWeek } from 'date-fns';
 
@@ -14,7 +14,7 @@ export default function DoctorSchedule() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        base44.entities.Appointment.filter({ doctor_email: user.email }).then(setAppointments);
+        mockClient.entities.Appointment.filter({ doctor_email: user.email }).then(setAppointments);
     }, []);
 
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));

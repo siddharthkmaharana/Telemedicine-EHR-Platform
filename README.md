@@ -1,38 +1,27 @@
 # Telemedicine-EHR-Platform
-**About**
 
-View and Edit  your app on [Base44.com](http://Base44.com) 
+A modern Telemedicine and Electronic Health Record (EHR) platform for doctors, patients, and administrators.
 
-This project contains everything you need to run your app locally.
+## Features
 
-**Edit the code in your local development environment**
+- **Patient Portal**: Book appointments, view health records, and prescriptions.
+- **Doctor Dashboard**: Manage schedule, view patient history, and write prescriptions.
+- **Admin Panel**: Platform overview, audit logs, and user management.
+- **Video Consultation**: Integrated video rooms for remote consultations.
 
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+## Getting Started
 
-**Prerequisites:** 
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Create a `.env.local` file with the following variables:
+   ```
+   VITE_APP_ID=your_app_id
+   ```
+4. Run the development server: `npm run dev`.
 
-1. Clone the repository using the project's Git URL 
-2. Navigate to the project directory
-3. Install dependencies: `npm install`
-4. Create an `.env.local` file and set the right environment variables
+## Tech Stack
 
-```
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=your_backend_url
-
-e.g.
-VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
-VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
-```
-
-Run the app: `npm run dev`
-
-**Publish your changes**
-
-Open [Base44.com](http://Base44.com) and click on Publish.
-
-**Docs & Support**
-
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+- **Frontend**: React, Vite, Framer Motion, Tailwind CSS.
+- **Charts**: Recharts.
+- **Icons**: Lucide React.
+- **Animations**: Framer Motion.

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Video, Clock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 import VideoConsultation from '@/pages/patient/VideoConsultation';
@@ -13,7 +13,7 @@ export default function DoctorVideoRooms() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        base44.entities.Appointment.filter({ doctor_email: user.email, status: 'confirmed' })
+        mockClient.entities.Appointment.filter({ doctor_email: user.email, status: 'confirmed' })
             .then(appts => { setAppointments(appts); setLoading(false); });
     }, []);
 

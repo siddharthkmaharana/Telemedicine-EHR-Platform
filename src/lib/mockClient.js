@@ -1,19 +1,5 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
 
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-// Create a client with authentication required
-const realClient = createClient({
-    appId,
-    token,
-    functionsVersion,
-    serverUrl: '',
-    requiresAuth: false,
-    appBaseUrl
-});
-
-// Mock data for demo purposes since the real backend is disconnected
+// Mock data and client logic to replace base44 SDK
 let mockData = {
     Appointment: [
         { id: '1', patient_name: 'Siddharth kumar Maharana', patient_email: 'patient@medisync.com', doctor_email: 'doctor@medisync.com', doctor_name: 'Dr. Samay Shukla', date: new Date().toISOString().split('T')[0], start_time: '09:00', status: 'confirmed' },
@@ -29,7 +15,7 @@ let mockData = {
         { id: '2', patient_email: 'patient@medisync.com', title: 'Chest X-Ray', date: '2023-09-15', type: 'Imaging', document_url: '#' }
     ],
     Doctor: [
-        { id: '1', email: 'doctor@medisync.com', name: 'Dr. Samay Shukla', specialty: 'General Physician', experience: 10, rating: 4.8 }
+        { id: '1', email: 'doctor@medisync.com', name: 'Dr. Samay Shukla', specialty: 'General Physician', experience: 10, rating: 4.8, user_email: 'doctor@medisync.com', full_name: 'Dr. Samay Shukla' }
     ],
     Patient: [
         { id: '1', email: 'patient@medisync.com', name: 'Siddharth kumar Maharana', age: 32, gender: 'Male', blood_group: 'O+' }
@@ -42,7 +28,10 @@ let mockData = {
 };
 
 const createMockEntity = (entityName) => ({
-    list: async () => [...(mockData[entityName] || [])],
+    list: async () => {
+        // Support for sort flags like '-created_date' (ignored for now in mock)
+        return [...(mockData[entityName] || [])];
+    },
     filter: async (criteria) => {
         const data = mockData[entityName] || [];
         return data.filter(item => {
@@ -78,17 +67,15 @@ const createMockEntity = (entityName) => ({
     }
 });
 
-// Attach mocked entities to the real client to ensure UI demo works
-// without losing the SDK's built-in auth methods.
-realClient.entities = {
-    Appointment: createMockEntity('Appointment'),
-    Prescription: createMockEntity('Prescription'),
-    MedicalRecords: createMockEntity('MedicalRecords'),
-    MedicalRecord: createMockEntity('MedicalRecords'),
-    Doctor: createMockEntity('Doctor'),
-    Patient: createMockEntity('Patient'),
-    AuditLog: createMockEntity('AuditLog'),
-    ClinicSettings: createMockEntity('ClinicSettings')
+export const mockClient = {
+    entities: {
+        Appointment: createMockEntity('Appointment'),
+        Prescription: createMockEntity('Prescription'),
+        MedicalRecords: createMockEntity('MedicalRecords'),
+        MedicalRecord: createMockEntity('MedicalRecords'),
+        Doctor: createMockEntity('Doctor'),
+        Patient: createMockEntity('Patient'),
+        AuditLog: createMockEntity('AuditLog'),
+        ClinicSettings: createMockEntity('ClinicSettings')
+    }
 };
-
-export const base44 = realClient;

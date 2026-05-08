@@ -42,7 +42,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 const AuthenticatedApp = () => {
     // We are keeping AuthProvider to avoid breaking anything that depends on it,
     // but the actual auth data is currently driven by MediSyncContext.
-    // We bypass the Base44 auth loading state if it errors.
+    // We bypass the auth loading state if it errors.
 
     return (
         <Routes>

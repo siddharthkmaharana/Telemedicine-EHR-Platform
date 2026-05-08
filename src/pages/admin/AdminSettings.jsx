@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Save, AlertTriangle, Shield, Bell, Clock, Building2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 
 export default function AdminSettings() {
     const [settings, setSettings] = useState({
@@ -21,7 +21,7 @@ export default function AdminSettings() {
     const [settingId, setSettingId] = useState(null);
 
     useEffect(() => {
-        base44.entities.ClinicSettings.list().then(s => {
+        mockClient.entities.ClinicSettings.list().then(s => {
             if (s.length > 0) { setSettings(s[0]); setSettingId(s[0].id); }
         });
     }, []);
@@ -29,9 +29,9 @@ export default function AdminSettings() {
     const save = async () => {
         setSaving(true);
         if (settingId) {
-            await base44.entities.ClinicSettings.update(settingId, settings);
+            await mockClient.entities.ClinicSettings.update(settingId, settings);
         } else {
-            const created = await base44.entities.ClinicSettings.create(settings);
+            const created = await mockClient.entities.ClinicSettings.create(settings);
             setSettingId(created.id);
         }
         setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);

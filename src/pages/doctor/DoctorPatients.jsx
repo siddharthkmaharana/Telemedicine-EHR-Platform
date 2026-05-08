@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, User, AlertTriangle, Heart, Clock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import EmptyState from '@/components/medisync/EmptyState';
 
 export default function DoctorPatients() {
@@ -15,9 +15,9 @@ export default function DoctorPatients() {
 
     useEffect(() => {
         Promise.all([
-            base44.entities.Appointment.filter({ doctor_email: user.email }),
-            base44.entities.Patient.list(),
-            base44.entities.MedicalRecord.filter({ doctor_email: user.email }),
+            mockClient.entities.Appointment.filter({ doctor_email: user.email }),
+            mockClient.entities.Patient.list(),
+            mockClient.entities.MedicalRecord.filter({ doctor_email: user.email }),
         ]).then(([appts, pts, recs]) => {
             setAppointments(appts);
             setPatients(pts);

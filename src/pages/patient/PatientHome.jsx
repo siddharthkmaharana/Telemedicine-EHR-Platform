@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Pill, FileText, Heart, AlertTriangle, Activity } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import StatCard from '@/components/medisync/StatCard';
 import AppointmentCard from '@/components/medisync/AppointmentCard';
 import EmptyState from '@/components/medisync/EmptyState';
@@ -19,9 +19,9 @@ export default function PatientHome() {
 
     useEffect(() => {
         Promise.all([
-            base44.entities.Appointment.filter({ patient_email: user.email }),
-            base44.entities.Prescription.filter({ patient_email: user.email }),
-            base44.entities.Patient.filter({ user_email: user.email }),
+            mockClient.entities.Appointment.filter({ patient_email: user.email }),
+            mockClient.entities.Prescription.filter({ patient_email: user.email }),
+            mockClient.entities.Patient.filter({ user_email: user.email }),
         ]).then(([appts, rxs, pts]) => {
             setAppointments(appts);
             setPrescriptions(rxs);

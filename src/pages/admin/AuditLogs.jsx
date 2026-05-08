@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Download, Search } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import EmptyState from '@/components/medisync/EmptyState';
 
 const ACTION_COLORS = {
@@ -21,7 +21,7 @@ export default function AuditLogs() {
     const [actionFilter, setActionFilter] = useState('all');
 
     useEffect(() => {
-        base44.entities.AuditLog.list('-created_date', 100).then(l => { setLogs(l); setLoading(false); });
+        mockClient.entities.AuditLog.list('-created_date', 100).then(l => { setLogs(l); setLoading(false); });
     }, []);
 
     const filtered = logs.filter(l => {

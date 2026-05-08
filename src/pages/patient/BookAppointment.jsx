@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Star, ChevronLeft, Clock, Calendar, Stethoscope } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import { format, addDays } from 'date-fns';
 
 const SPECIALIZATIONS = ['Cardiology', 'Dermatology', 'General', 'Neurology', 'Orthopedics', 'Pediatrics', 'Gynecology', 'Psychiatry', 'Ophthalmology', 'ENT'];
@@ -29,13 +29,13 @@ export default function BookAppointment() {
 
     useEffect(() => {
         if (specialization) {
-            base44.entities.Doctor.filter({ specialization, is_active: true }).then(setDoctors);
+            mockClient.entities.Doctor.filter({ specialization, is_active: true }).then(setDoctors);
         }
     }, [specialization]);
 
     useEffect(() => {
         if (selectedDoctor && selectedDate) {
-            base44.entities.Appointment.filter({ doctor_email: selectedDoctor.user_email, date: selectedDate })
+            mockClient.entities.Appointment.filter({ doctor_email: selectedDoctor.user_email, date: selectedDate })
                 .then(appts => setBookedSlots(appts.map(a => a.start_time)));
         }
     }, [selectedDoctor, selectedDate]);
@@ -43,7 +43,7 @@ export default function BookAppointment() {
     const handleConfirm = async () => {
         setLoading(true);
         const roomToken = `room_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        await base44.entities.Appointment.create({
+        await mockClient.entities.Appointment.create({
             patient_email: user.email,
             patient_name: user.name,
             doctor_email: selectedDoctor.user_email,

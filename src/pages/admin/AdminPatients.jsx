@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Heart, AlertTriangle, Download } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { mockClient } from '@/lib/mockClient';
 import EmptyState from '@/components/medisync/EmptyState';
 
 export default function AdminPatients() {
@@ -11,7 +11,7 @@ export default function AdminPatients() {
     const [selected, setSelected] = useState(null);
 
     useEffect(() => {
-        base44.entities.Patient.list().then(p => { setPatients(p); setLoading(false); });
+        mockClient.entities.Patient.list().then(p => { setPatients(p); setLoading(false); });
     }, []);
 
     const filtered = patients.filter(p =>
