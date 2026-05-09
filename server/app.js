@@ -12,8 +12,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Platform API is running' });
 });
 
-// Future API routes will be mounted here
-// e.g., app.use('/api/auth', require('./routes/auth'));
+// API routes
+app.use('/api/auth', require('./routes/auth'));
 // e.g., app.use('/api/ehr', require('./routes/ehr'));
 
 // 404 Handler
