@@ -12,12 +12,9 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Platform API is running' });
 });
 
-// API Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/records', require('./routes/recordRoutes'));
-app.use('/api/appointments', require('./routes/appointmentRoutes'));
-app.use('/api/patients', require('./routes/patientRoutes'));
-app.use('/api/telehealth', require('./routes/telehealthRoutes'));
+// API routes
+app.use('/api/auth', require('./routes/auth'));
+// e.g., app.use('/api/ehr', require('./routes/ehr'));
 
 // 404 Handler
 app.use((req, res, next) => {
