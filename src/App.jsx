@@ -6,6 +6,7 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { MediSyncProvider } from '@/lib/MediSyncContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import ConsultationRoom from './pages/ConsultationRoom';
 
 // Role Select (login page)
 import RoleSelect from './pages/RoleSelect';
@@ -81,6 +82,9 @@ const AuthenticatedApp = () => {
                 <Route path="audit" element={<AuditLogs />} />
                 <Route path="settings" element={<AdminSettings />} />
             </Route>
+
+            {/* WebRTC Consultation Room (Shared for doctor and patient) */}
+            <Route path="/room/:appointmentId" element={<ConsultationRoom />} />
 
             <Route path="*" element={<PageNotFound />} />
         </Routes>

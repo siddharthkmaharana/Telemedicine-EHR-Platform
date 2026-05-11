@@ -13,8 +13,11 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use('/api/auth', require('./routes/auth'));
-// e.g., app.use('/api/ehr', require('./routes/ehr'));
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/patients', require('./routes/patientRoutes'));
+app.use('/api/records', require('./routes/recordRoutes'));
+app.use('/api/appointments', require('./routes/appointmentRoutes'));
+app.use('/api/telehealth', require('./routes/telehealthRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {
