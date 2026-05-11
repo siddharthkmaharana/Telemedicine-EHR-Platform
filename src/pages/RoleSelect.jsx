@@ -26,22 +26,21 @@ export default function RoleSelect() {
 
     const roleConfig = ROLES.find(r => r.id === activeRole);
 
-    const doLogin = (emailVal, passwordVal, roleHint) => {
-        const expectedEmails = {
-            patient: 'patient@medisync.com',
-            doctor: 'doctor@medisync.com',
-            admin: 'admin@medisync.com',
-        };
-        // Find role by email
-        let role = roleHint;
-        if (!role) {
-            role = Object.keys(expectedEmails).find(r => expectedEmails[r] === emailVal);
+    const doLogin = async (emailVal, passwordVal, roleHint) => {
+        try {
+            const { default: api } = await import('@/lib/api');
+            const response = await api.post('/auth/login', { email: emailVal, password: passwordVal });
+            const { token, user } = response.data;
+            
+            localStorage.setItem('token', token);
+            localStorage.setItem('medisync_user', JSON.stringify(user));
+            
+            navigate(`/${user.role}`);
+        } catch (err) {
+            console.error('Login failed:', err);
+            setError(err.response?.data?.message || 'Invalid credentials or server error');
+            setLoading(false);
         }
-        if (!role) { setError('User not found'); setLoading(false); return; }
-        if (passwordVal !== 'Demo@123') { setError('Invalid password'); setLoading(false); return; }
-        const userData = { email: emailVal, role, name: role === 'patient' ? 'Siddharth kumar Maharana' : role === 'doctor' ? 'Dr. Samay Shukla' : 'System Admin' };
-        localStorage.setItem('medisync_user', JSON.stringify(userData));
-        navigate(`/${role}`);
     };
 
     const handleLogin = (e) => {
