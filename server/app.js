@@ -1,7 +1,18 @@
-const express = require('express');
-const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
+
+// Security Middlewares
+app.use(helmet());
+
+// Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
 
 // Middlewares
 app.use(cors());
@@ -18,6 +29,7 @@ app.use('/api/records', require('./routes/recordRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/patients', require('./routes/patientRoutes'));
 app.use('/api/telehealth', require('./routes/telehealthRoutes'));
+app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 
 // 404 Handler
 app.use((req, res, next) => {
