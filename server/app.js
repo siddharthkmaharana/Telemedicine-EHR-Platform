@@ -23,11 +23,11 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Platform API is running' });
 });
 
-// API Routes
+// API routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/patients', require('./routes/patientRoutes'));
 app.use('/api/records', require('./routes/recordRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
-app.use('/api/patients', require('./routes/patientRoutes'));
 app.use('/api/telehealth', require('./routes/telehealthRoutes'));
 app.use('/api/prescriptions', require('./routes/prescriptionRoutes'));
 
