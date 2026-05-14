@@ -39,6 +39,7 @@ import AdminAppointments from './pages/admin/AdminAppointments';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AuditLogs from './pages/admin/AuditLogs';
 import AdminSettings from './pages/admin/AdminSettings';
+import ConsultationRoom from './pages/ConsultationRoom';
 
 const AuthenticatedApp = () => {
     // We are keeping AuthProvider to avoid breaking anything that depends on it,
@@ -83,9 +84,7 @@ const AuthenticatedApp = () => {
                 <Route path="settings" element={<AdminSettings />} />
             </Route>
 
-            {/* WebRTC Consultation Room (Shared for doctor and patient) */}
-            <Route path="/room/:appointmentId" element={<ConsultationRoom />} />
-
+            <Route path="/consultation/:appointmentId" element={<ConsultationRoom />} />
             <Route path="*" element={<PageNotFound />} />
         </Routes>
     );

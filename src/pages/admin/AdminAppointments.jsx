@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, X } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
+import apiClient from '@/lib/api';
 
 export default function AdminAppointments() {
     const [appointments, setAppointments] = useState([]);
@@ -13,18 +13,24 @@ export default function AdminAppointments() {
     const [selected, setSelected] = useState(null);
 
     useEffect(() => {
-        mockClient.entities.Appointment.list('-created_date').then(a => { setAppointments(a); setLoading(false); });
+        apiClient.get('/appointments').then(res => { setAppointments(res.data); setLoading(false); });
     }, []);
 
     const cancelAppointment = async (id) => {
-        await mockClient.entities.Appointment.update(id, { status: 'cancelled' });
-        setAppointments(a => a.map(appt => appt.id === id ? { ...appt, status: 'cancelled' } : appt));
-        setSelected(null);
+        try {
+            await apiClient.put(`/appointments/${id}`, { status: 'cancelled' });
+            setAppointments(a => a.map(appt => appt._id === id ? { ...appt, status: 'cancelled' } : appt));
+            setSelected(null);
+        } catch (err) {
+            console.error("Failed to cancel appointment", err);
+        }
     };
 
     const filtered = appointments.filter(a => {
-        const matchSearch = a.patient_name?.toLowerCase().includes(search.toLowerCase()) ||
-            a.doctor_name?.toLowerCase().includes(search.toLowerCase());
+        const patientName = `${a.patientId?.userId?.firstName || ''} ${a.patientId?.userId?.lastName || ''}`;
+        const doctorName = `${a.doctorId?.userId?.firstName || ''} ${a.doctorId?.userId?.lastName || ''}`;
+        const matchSearch = patientName.toLowerCase().includes(search.toLowerCase()) ||
+            doctorName.toLowerCase().includes(search.toLowerCase());
         const matchStatus = statusFilter === 'all' || a.status === statusFilter;
         return matchSearch && matchStatus;
     });
@@ -62,33 +68,37 @@ export default function AdminAppointments() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((appt, i) => (
-                                <motion.tr key={appt.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
-                                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                                    className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                                    <td className="px-5 py-4 text-sm font-medium text-[#F1F5F9]">{appt.patient_name}</td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{appt.doctor_name}</td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{appt.date} {appt.start_time}</td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{appt.doctor_specialization || 'N/A'}</td>
-                                    <td className="px-5 py-4"><StatusBadge status={appt.status} /></td>
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => setSelected(appt)}
-                                                className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                                                style={{ background: 'rgba(0,217,184,0.15)', color: '#00D9B8' }}>
-                                                View
-                                            </button>
-                                            {appt.status === 'pending' && (
-                                                <button onClick={() => cancelAppointment(appt.id)}
+                            {filtered.map((appt, i) => {
+                                const patientName = `${appt.patientId?.userId?.firstName || ''} ${appt.patientId?.userId?.lastName || ''}`;
+                                const doctorName = `${appt.doctorId?.userId?.firstName || ''} ${appt.doctorId?.userId?.lastName || ''}`;
+                                return (
+                                    <motion.tr key={appt._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}
+                                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                                        className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                                        <td className="px-5 py-4 text-sm font-medium text-[#F1F5F9]">{patientName}</td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{doctorName}</td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{new Date(appt.startTime).toLocaleString()}</td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{appt.doctorId?.specialization || 'N/A'}</td>
+                                        <td className="px-5 py-4"><StatusBadge status={appt.status} /></td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => setSelected(appt)}
                                                     className="text-xs px-3 py-1.5 rounded-lg font-medium"
-                                                    style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
-                                                    Cancel
+                                                    style={{ background: 'rgba(0,217,184,0.15)', color: '#00D9B8' }}>
+                                                    View
                                                 </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </motion.tr>
-                            ))}
+                                                {appt.status === 'pending' && (
+                                                    <button onClick={() => cancelAppointment(appt._id)}
+                                                        className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                                                        style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+                                                        Cancel
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </motion.tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -105,27 +115,30 @@ export default function AdminAppointments() {
                                 <button onClick={() => setSelected(null)}><X size={18} color="#64748B" /></button>
                             </div>
                             <div className="space-y-3 text-sm">
-                                {[
-                                    { label: 'Patient', value: selected.patient_name },
-                                    { label: 'Doctor', value: selected.doctor_name },
-                                    { label: 'Date', value: selected.date },
-                                    { label: 'Time', value: selected.start_time },
-                                    { label: 'Specialization', value: selected.doctor_specialization || 'N/A' },
-                                    { label: 'Chief Complaint', value: selected.chief_complaint || 'N/A' },
-                                    { label: 'Room Token', value: selected.room_token ? selected.room_token.slice(0, 20) + '...' : 'N/A' },
-                                ].map(item => (
-                                    <div key={item.label} className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                                        <span className="text-[#64748B]">{item.label}</span>
-                                        <span className="font-medium text-[#F1F5F9] text-right max-w-[60%] truncate">{item.value}</span>
-                                    </div>
-                                ))}
+                                {(() => {
+                                    const patientName = `${selected.patientId?.userId?.firstName || ''} ${selected.patientId?.userId?.lastName || ''}`;
+                                    const doctorName = `${selected.doctorId?.userId?.firstName || ''} ${selected.doctorId?.userId?.lastName || ''}`;
+                                    return [
+                                        { label: 'Patient', value: patientName },
+                                        { label: 'Doctor', value: doctorName },
+                                        { label: 'Date/Time', value: new Date(selected.startTime).toLocaleString() },
+                                        { label: 'Specialization', value: selected.doctorId?.specialization || 'N/A' },
+                                        { label: 'Chief Complaint', value: selected.notes || 'N/A' },
+                                        { label: 'Room Token', value: selected.roomToken ? selected.roomToken.slice(0, 20) + '...' : 'N/A' },
+                                    ].map(item => (
+                                        <div key={item.label} className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                                            <span className="text-[#64748B]">{item.label}</span>
+                                            <span className="font-medium text-[#F1F5F9] text-right max-w-[60%] truncate">{item.value}</span>
+                                        </div>
+                                    ));
+                                })()}
                                 <div className="flex justify-between py-2 items-center">
                                     <span className="text-[#64748B]">Status</span>
                                     <StatusBadge status={selected.status} />
                                 </div>
                             </div>
                             {selected.status === 'pending' && (
-                                <button onClick={() => cancelAppointment(selected.id)}
+                                <button onClick={() => cancelAppointment(selected._id)}
                                     className="w-full mt-5 py-2.5 rounded-xl text-sm font-semibold"
                                     style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
                                     Cancel Appointment

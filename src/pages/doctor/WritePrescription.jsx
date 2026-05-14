@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, FileText, Download, CheckCircle } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 
 const FREQ_OPTIONS = ['Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 'As needed', 'Weekly'];
 const DURATION_OPTIONS = ['3 days', '5 days', '7 days', '10 days', '14 days', '21 days', '30 days', 'Ongoing'];
@@ -19,25 +19,41 @@ export default function WritePrescription() {
     const [instructions, setInstructions] = useState('');
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [lastPrescriptionId, setLastPrescriptionId] = useState(null);
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const patientEmail = params.get('patient');
-        const apptId = params.get('appt');
+        const patientId = params.get('patientId');
+        const apptId = params.get('apptId');
 
-        Promise.all([
-            mockClient.entities.Appointment.filter({ doctor_email: user.email, status: 'completed' }),
-            mockClient.entities.Patient.list(),
-        ]).then(([appts, pts]) => {
-            setAppointments(appts);
-            setPatients(pts);
-            if (patientEmail) {
-                const appt = appts.find(a => a.patient_email === patientEmail);
-                if (appt) { setSelectedPatient(appt); setPatientSearch(appt.patient_name); }
+        const fetchData = async () => {
+            try {
+                const [apptsRes, patientsRes] = await Promise.all([
+                    apiClient.get('/appointments/doctor/me'),
+                    apiClient.get('/patients')
+                ]);
+                
+                const appts = apptsRes.data;
+                const pts = patientsRes.data;
+
+                setAppointments(appts);
+                setPatients(pts);
+
+                if (patientId) {
+                    const pt = pts.find(p => p._id === patientId);
+                    if (pt) { 
+                        setSelectedPatient(pt); 
+                        setPatientSearch(pt.full_name || pt.email); 
+                    }
+                }
+                if (apptId) setSelectedAppt(apptId);
+            } catch (err) {
+                console.error("Failed to fetch data", err);
             }
-            if (apptId) setSelectedAppt(apptId);
-        });
+        };
+
+        fetchData();
     }, []);
 
     const addMed = () => setMedications(m => [...m, emptyMed()]);
@@ -47,49 +63,40 @@ export default function WritePrescription() {
     const handleSave = async () => {
         if (!selectedPatient || !diagnosis || medications.every(m => !m.drug_name)) return;
         setSaving(true);
-        const hash = `SHA256:${Math.random().toString(36).slice(2).toUpperCase()}`;
-        await mockClient.entities.Prescription.create({
-            patient_email: selectedPatient.patient_email,
-            patient_name: selectedPatient.patient_name,
-            doctor_email: user.email,
-            doctor_name: user.name,
-            appointment_id: selectedAppt,
-            diagnosis_summary: diagnosis,
-            medications: JSON.stringify(medications.filter(m => m.drug_name)),
-            additional_instructions: instructions,
-            signature_hash: hash,
-            qr_payload: JSON.stringify({ prescriptionId: Date.now(), doctorId: user.email, hash }),
-            issued_date: new Date().toISOString().split('T')[0],
-            status: 'active',
-        });
-        setSaving(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
+        try {
+            const response = await apiClient.post('/prescriptions', {
+                patientId: selectedPatient._id,
+                appointmentId: selectedAppt,
+                medicationsData: JSON.stringify(medications.filter(m => m.drug_name)),
+                instructions: `${diagnosis}. ${instructions}`
+            });
+            
+            setLastPrescriptionId(response.data.prescriptionId);
+            setSaving(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            console.error("Failed to save prescription", err);
+            setSaving(false);
+        }
     };
 
-    const downloadPDF = () => {
-        const content = [
-            'MEDISYNC PRESCRIPTION',
-            '='.repeat(40),
-            `Patient: ${selectedPatient?.patient_name || 'N/A'}`,
-            `Doctor: ${user.name}`,
-            `Date: ${new Date().toLocaleDateString()}`,
-            '',
-            `DIAGNOSIS: ${diagnosis}`,
-            '',
-            'MEDICATIONS:',
-            ...medications.filter(m => m.drug_name).map(m =>
-                `• ${m.drug_name} | ${m.dosage} | ${m.frequency} | ${m.duration}${m.notes ? ` | Note: ${m.notes}` : ''}`
-            ),
-            '',
-            `Instructions: ${instructions || 'None'}`,
-            '',
-            `Digital Signature: ${`SHA256:${Math.random().toString(36).slice(2).toUpperCase()}`}`,
-            '',
-            'This prescription is digitally signed by MediSync.',
-        ].join('\n');
-        const blob = new Blob([content], { type: 'text/plain' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'prescription.txt'; a.click();
+    const downloadPDF = async () => {
+        if (!lastPrescriptionId) return;
+        try {
+            const response = await apiClient.get(`/prescriptions/download/${lastPrescriptionId}`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `prescription_${lastPrescriptionId}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error("Failed to download PDF", err);
+        }
     };
 
     const filteredAppts = appointments.filter(a => !selectedPatient || a.patient_email === selectedPatient.patient_email);

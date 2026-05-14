@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Download, Search } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 import EmptyState from '@/components/medisync/EmptyState';
 
 const ACTION_COLORS = {
@@ -21,21 +21,23 @@ export default function AuditLogs() {
     const [actionFilter, setActionFilter] = useState('all');
 
     useEffect(() => {
-        mockClient.entities.AuditLog.list('-created_date', 100).then(l => { setLogs(l); setLoading(false); });
+        apiClient.get('/audit').then(res => { setLogs(res.data); setLoading(false); }).catch(err => { console.error(err); setLoading(false); });
     }, []);
 
     const filtered = logs.filter(l => {
-        const matchSearch = l.user_email?.toLowerCase().includes(search.toLowerCase()) ||
+        const email = l.userId?.email || l.user_email || '';
+        const role = l.userId?.role || l.user_role || '';
+        const matchSearch = email.toLowerCase().includes(search.toLowerCase()) ||
             l.description?.toLowerCase().includes(search.toLowerCase()) ||
-            l.resource_type?.toLowerCase().includes(search.toLowerCase());
-        const matchRole = roleFilter === 'all' || l.user_role === roleFilter;
+            l.resourceType?.toLowerCase().includes(search.toLowerCase());
+        const matchRole = roleFilter === 'all' || role === roleFilter;
         const matchAction = actionFilter === 'all' || l.action === actionFilter;
         return matchSearch && matchRole && matchAction;
     });
 
     const exportCSV = () => {
         const rows = ['Timestamp,User,Role,Action,Resource,Description,IP,PHI']
-            .concat(filtered.map(l => `${l.created_date},${l.user_email},${l.user_role},${l.action},${l.resource_type},${l.description || ''},${l.ip_address || ''},${l.is_phi}`))
+            .concat(filtered.map(l => `${l.timestamp || l.created_date},${l.userId?.email || ''},${l.userId?.role || ''},${l.action},${l.resourceType || ''},${l.description || ''},${l.ipAddress || ''},${l.isPhi || false}`))
             .join('\n');
         const blob = new Blob([rows], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'audit_logs.csv'; a.click();
@@ -95,32 +97,35 @@ export default function AuditLogs() {
                         <tbody>
                             {filtered.map((log, i) => {
                                 const ac = ACTION_COLORS[log.action] || ACTION_COLORS.READ;
+                                const email = log.userId?.email || log.user_email || '';
+                                const role = log.userId?.role || log.user_role || '';
+                                const timestamp = log.timestamp || log.created_date;
                                 return (
-                                    <motion.tr key={log.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.02, 0.5) }}
-                                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: log.is_phi ? 'rgba(245,158,11,0.04)' : 'transparent' }}
+                                    <motion.tr key={log._id || log.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.02, 0.5) }}
+                                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: log.isPhi || log.is_phi ? 'rgba(245,158,11,0.04)' : 'transparent' }}
                                         className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
                                         <td className="px-5 py-3.5 text-xs text-[#64748B] font-mono whitespace-nowrap">
-                                            {log.created_date ? new Date(log.created_date).toLocaleString() : '—'}
+                                            {timestamp ? new Date(timestamp).toLocaleString() : '—'}
                                         </td>
                                         <td className="px-5 py-3.5">
-                                            <div className="text-xs font-medium text-[#F1F5F9]">{log.user_email}</div>
-                                            {log.is_phi && <span className="text-xs text-[#F59E0B]">🔒 PHI Access</span>}
+                                            <div className="text-xs font-medium text-[#F1F5F9]">{email}</div>
+                                            {(log.isPhi || log.is_phi) && <span className="text-xs text-[#F59E0B]">🔒 PHI Access</span>}
                                         </td>
                                         <td className="px-5 py-3.5">
                                             <span className="text-xs px-2 py-0.5 rounded-md capitalize font-medium"
                                                 style={{
-                                                    background: log.user_role === 'doctor' ? 'rgba(124,58,237,0.15)' : log.user_role === 'patient' ? 'rgba(245,158,11,0.15)' : 'rgba(0,217,184,0.15)',
-                                                    color: log.user_role === 'doctor' ? '#7C3AED' : log.user_role === 'patient' ? '#F59E0B' : '#00D9B8'
+                                                    background: role === 'doctor' ? 'rgba(124,58,237,0.15)' : role === 'patient' ? 'rgba(245,158,11,0.15)' : 'rgba(0,217,184,0.15)',
+                                                    color: role === 'doctor' ? '#7C3AED' : role === 'patient' ? '#F59E0B' : '#00D9B8'
                                                 }}>
-                                                {log.user_role}
+                                                {role}
                                             </span>
                                         </td>
                                         <td className="px-5 py-3.5">
                                             <span className="text-xs px-2 py-1 rounded-md font-semibold" style={{ background: ac.bg, color: ac.text }}>{log.action}</span>
                                         </td>
-                                        <td className="px-5 py-3.5 text-xs text-[#64748B]">{log.resource_type}</td>
+                                        <td className="px-5 py-3.5 text-xs text-[#64748B]">{log.resourceType || log.resource_type}</td>
                                         <td className="px-5 py-3.5 text-xs text-[#64748B] max-w-xs truncate">{log.description || '—'}</td>
-                                        <td className="px-5 py-3.5 text-xs text-[#64748B] font-mono">{log.ip_address || '127.0.0.1'}</td>
+                                        <td className="px-5 py-3.5 text-xs text-[#64748B] font-mono">{log.ipAddress || log.ip_address || '127.0.0.1'}</td>
                                     </motion.tr>
                                 );
                             })}

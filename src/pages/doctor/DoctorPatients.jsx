@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, User, AlertTriangle, Heart, Clock } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import EmptyState from '@/components/medisync/EmptyState';
+import apiClient from '@/lib/api';
 
 export default function DoctorPatients() {
     const [appointments, setAppointments] = useState([]);
@@ -14,30 +14,46 @@ export default function DoctorPatients() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        Promise.all([
-            mockClient.entities.Appointment.filter({ doctor_email: user.email }),
-            mockClient.entities.Patient.list(),
-            mockClient.entities.MedicalRecord.filter({ doctor_email: user.email }),
-        ]).then(([appts, pts, recs]) => {
-            setAppointments(appts);
-            setPatients(pts);
-            setRecords(recs);
-            setLoading(false);
-        });
+        const fetchData = async () => {
+            try {
+                const [apptsRes, ptsRes, recsRes] = await Promise.all([
+                    apiClient.get('/appointments/doctor/me'),
+                    apiClient.get('/patients'),
+                    apiClient.get('/records/doctor/me'),
+                ]);
+                setAppointments(apptsRes.data);
+                setPatients(ptsRes.data);
+                setRecords(recsRes.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Failed to fetch patients dashboard", err);
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
-    const uniquePatients = [...new Map(appointments.map(a => [a.patient_email, a])).values()];
-    const filtered = uniquePatients.filter(p =>
-        p.patient_name?.toLowerCase().includes(search.toLowerCase()) ||
-        p.patient_email?.toLowerCase().includes(search.toLowerCase())
-    );
+    // Unique patients by their ID
+    const patientMap = new Map();
+    appointments.forEach(a => {
+        if (a.patientId && !patientMap.has(a.patientId._id)) {
+            patientMap.set(a.patientId._id, a.patientId);
+        }
+    });
+    const uniquePatients = Array.from(patientMap.values());
 
-    const getPatientDetails = (email) => patients.find(p => p.user_email === email);
-    const getPatientRecords = (email) => records.filter(r => r.patient_email === email);
-    const getPatientAppointments = (email) => appointments.filter(a => a.patient_email === email);
-    const getLastVisit = (email) => {
-        const appts = getPatientAppointments(email).filter(a => a.status === 'completed');
-        return appts.length > 0 ? appts.sort((a, b) => b.date.localeCompare(a.date))[0].date : 'N/A';
+    const filtered = uniquePatients.filter(p => {
+        const name = `${p.userId?.firstName || ''} ${p.userId?.lastName || ''}`;
+        const email = p.userId?.email || '';
+        return name.toLowerCase().includes(search.toLowerCase()) || 
+               email.toLowerCase().includes(search.toLowerCase());
+    });
+
+    const getPatientRecords = (patientId) => records.filter(r => r.patientId === patientId || r.patientId?._id === patientId);
+    const getPatientAppointments = (patientId) => appointments.filter(a => a.patientId?._id === patientId);
+    const getLastVisit = (patientId) => {
+        const appts = getPatientAppointments(patientId).filter(a => a.status === 'completed');
+        return appts.length > 0 ? new Date(appts.sort((a, b) => b.startTime.localeCompare(a.startTime))[0].startTime).toLocaleDateString() : 'N/A';
     };
 
     return (
@@ -67,31 +83,34 @@ export default function DoctorPatients() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((p, i) => (
-                                <motion.tr key={p.patient_email} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                                    className="hover:bg-[rgba(255,255,255,0.03)] transition-colors">
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
-                                                style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
-                                                {p.patient_name?.charAt(0) || 'P'}
+                            {filtered.map((p, i) => {
+                                const patientName = `${p.userId?.firstName || ''} ${p.userId?.lastName || ''}`;
+                                return (
+                                    <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                                        className="hover:bg-[rgba(255,255,255,0.03)] transition-colors">
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
+                                                    style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
+                                                    {patientName.charAt(0) || 'P'}
+                                                </div>
+                                                <span className="text-sm font-medium text-[#F1F5F9]">{patientName}</span>
                                             </div>
-                                            <span className="text-sm font-medium text-[#F1F5F9]">{p.patient_name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{p.patient_email}</td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{getLastVisit(p.patient_email)}</td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{getPatientRecords(p.patient_email).length}</td>
-                                    <td className="px-5 py-4">
-                                        <button onClick={() => setSelected(p)}
-                                            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
-                                            style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
-                                            View Record
-                                        </button>
-                                    </td>
-                                </motion.tr>
-                            ))}
+                                        </td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{p.userId?.email}</td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{getLastVisit(p._id)}</td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{getPatientRecords(p._id).length}</td>
+                                        <td className="px-5 py-4">
+                                            <button onClick={() => setSelected(p)}
+                                                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
+                                                style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
+                                                View Record
+                                            </button>
+                                        </td>
+                                    </motion.tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -114,47 +133,42 @@ export default function DoctorPatients() {
                             <div className="flex items-center gap-4 mb-6 p-4 rounded-xl" style={{ background: 'rgba(124,58,237,0.08)' }}>
                                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-2xl"
                                     style={{ background: 'rgba(124,58,237,0.2)', color: '#7C3AED' }}>
-                                    {selected.patient_name?.charAt(0)}
+                                    {`${selected.userId?.firstName || ''} ${selected.userId?.lastName || ''}`.charAt(0)}
                                 </div>
                                 <div>
-                                    <div className="text-lg font-bold text-[#F1F5F9]">{selected.patient_name}</div>
-                                    <div className="text-sm text-[#64748B]">{selected.patient_email}</div>
+                                    <div className="text-lg font-bold text-[#F1F5F9]">{`${selected.userId?.firstName || ''} ${selected.userId?.lastName || ''}`}</div>
+                                    <div className="text-sm text-[#64748B]">{selected.userId?.email}</div>
                                 </div>
                             </div>
 
-                            {(() => {
-                                const details = getPatientDetails(selected.patient_email);
-                                return details ? (
-                                    <div className="space-y-2 mb-6">
-                                        {[
-                                            { icon: Heart, label: 'Blood Group', value: details.blood_group || 'O+' },
-                                            { icon: AlertTriangle, label: 'Allergies', value: details.allergies?.join(', ') || 'None' },
-                                        ].map(item => (
-                                            <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl"
-                                                style={{ background: 'rgba(255,255,255,0.04)' }}>
-                                                <item.icon size={14} color="#64748B" />
-                                                <span className="text-xs text-[#64748B]">{item.label}:</span>
-                                                <span className="text-xs font-medium text-[#F1F5F9]">{item.value}</span>
-                                            </div>
-                                        ))}
+                            <div className="space-y-2 mb-6">
+                                {[
+                                    { icon: Heart, label: 'Blood Group', value: selected.bloodGroup || 'N/A' },
+                                    { icon: AlertTriangle, label: 'Allergies', value: selected.allergies?.join(', ') || 'None' },
+                                ].map(item => (
+                                    <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl"
+                                        style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                        <item.icon size={14} color="#64748B" />
+                                        <span className="text-xs text-[#64748B]">{item.label}:</span>
+                                        <span className="text-xs font-medium text-[#F1F5F9]">{item.value}</span>
                                     </div>
-                                ) : null;
-                            })()}
+                                ))}
+                            </div>
 
                             {/* Medical Timeline */}
                             <h4 className="text-sm font-semibold text-[#F1F5F9] mb-3">Medical History</h4>
                             <div className="space-y-3">
-                                {getPatientRecords(selected.patient_email).map((rec, i) => (
-                                    <div key={rec.id} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                                {getPatientRecords(selected._id).map((rec, i) => (
+                                    <div key={rec._id} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                                         <div className="flex items-center gap-2 mb-1">
                                             <Clock size={12} color="#64748B" />
-                                            <span className="text-xs text-[#64748B]">{rec.visit_date}</span>
+                                            <span className="text-xs text-[#64748B]">{new Date(rec.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         <div className="text-sm font-medium text-[#F1F5F9]">{rec.diagnosis || 'General Visit'}</div>
                                         {rec.notes && <div className="text-xs text-[#64748B] mt-1">{rec.notes}</div>}
                                     </div>
                                 ))}
-                                {getPatientRecords(selected.patient_email).length === 0 && (
+                                {getPatientRecords(selected._id).length === 0 && (
                                     <div className="text-sm text-[#64748B] text-center py-4">No records available</div>
                                 )}
                             </div>

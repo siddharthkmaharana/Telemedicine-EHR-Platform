@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Pill, FileText, Heart, AlertTriangle, Activity } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatCard from '@/components/medisync/StatCard';
 import AppointmentCard from '@/components/medisync/AppointmentCard';
 import EmptyState from '@/components/medisync/EmptyState';
 import SkeletonCard from '@/components/medisync/SkeletonCard';
 import { format, parseISO } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import apiClient from '@/lib/api';
 
 export default function PatientHome() {
     const [appointments, setAppointments] = useState([]);
@@ -18,32 +18,42 @@ export default function PatientHome() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        Promise.all([
-            mockClient.entities.Appointment.filter({ patient_email: user.email }),
-            mockClient.entities.Prescription.filter({ patient_email: user.email }),
-            mockClient.entities.Patient.filter({ user_email: user.email }),
-        ]).then(([appts, rxs, pts]) => {
-            setAppointments(appts);
-            setPrescriptions(rxs);
-            setPatient(pts[0] || null);
-            setLoading(false);
-        });
+        const fetchData = async () => {
+            try {
+                const [apptsRes, rxsRes, patientsRes] = await Promise.all([
+                    apiClient.get('/appointments/patient/me'),
+                    apiClient.get('/prescriptions/patient/me'),
+                    apiClient.get(`/patients/${user.userId || ''}`),
+                ]);
+                setAppointments(apptsRes.data);
+                setPrescriptions(rxsRes.data);
+                setPatient(patientsRes.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Failed to fetch patient data", err);
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
-    const upcoming = appointments.filter(a => ['confirmed', 'pending'].includes(a.status)).slice(0, 3);
+    const upcoming = appointments.filter(a => ['confirmed', 'approved', 'pending'].includes(a.status)).slice(0, 3);
     const recentRx = prescriptions.slice(0, 2);
-    const activePrescriptions = prescriptions.filter(p => p.status === 'active').length;
+    const activePrescriptions = prescriptions.length; // Simplified for demo
 
     return (
         <div className="space-y-8">
             {/* Stat cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={Calendar} label="Upcoming Appts" value={upcoming.length} color="amber" index={0} />
+                <StatCard icon={Calendar} label="Upcoming Appts" value={upcoming.length} delta={0} color="amber" index={0} />
                 <StatCard icon={Clock} label="Last Consultation"
-                    value={appointments.find(a => a.status === 'completed')?.date ? format(parseISO(appointments.find(a => a.status === 'completed').date), 'MMM d') : 'N/A'}
-                    color="teal" index={1} />
-                <StatCard icon={Pill} label="Active Prescriptions" value={activePrescriptions} color="violet" index={2} />
-                <StatCard icon={FileText} label="Reports Uploaded" value={0} color="teal" index={3} />
+                    value={(() => {
+                        const completed = appointments.find(a => a.status === 'completed');
+                        return completed?.startTime ? format(parseISO(completed.startTime), 'MMM d') : 'N/A';
+                    })()}
+                    delta={0} color="teal" index={1} />
+                <StatCard icon={Pill} label="Active Prescriptions" value={activePrescriptions} delta={0} color="violet" index={2} />
+                <StatCard icon={FileText} label="Reports Uploaded" value={0} delta={0} color="teal" index={3} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -64,7 +74,7 @@ export default function PatientHome() {
                     ) : (
                         <div className="space-y-3">
                             {upcoming.map((appt, i) => (
-                                <AppointmentCard key={appt.id} appointment={appt} index={i} perspective="patient"
+                                <AppointmentCard key={appt._id} appointment={appt} index={i} perspective="patient"
                                     onJoin={() => navigate('/patient/video')} />
                             ))}
                         </div>
@@ -77,16 +87,16 @@ export default function PatientHome() {
                     </div>
                     {recentRx.length === 0 && !loading ? (
                         <div className="card-surface">
-                            <EmptyState icon={Pill} title="No Prescriptions" message="Your prescriptions will appear here" color="amber" />
+                            <EmptyState icon={Pill} title="No Prescriptions" message="Your prescriptions will appear here" color="amber" action={() => {}} actionLabel="" />
                         </div>
                     ) : (
                         <div className="space-y-2">
                             {recentRx.map((rx, i) => (
-                                <motion.div key={rx.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                                <motion.div key={rx._id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: i * 0.1 }} className="card-surface p-4 flex items-center justify-between">
                                     <div>
                                         <div className="text-sm font-medium text-[#F1F5F9]">{rx.diagnosis_summary || 'General Prescription'}</div>
-                                        <div className="text-xs text-[#64748B] mt-0.5">{rx.doctor_name} · {rx.issued_date}</div>
+                                        <div className="text-xs text-[#64748B] mt-0.5">{rx.doctorId?.userId?.firstName} {rx.doctorId?.userId?.lastName} · {new Date(rx.createdAt).toLocaleDateString()}</div>
                                     </div>
                                     <button className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
                                         style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>

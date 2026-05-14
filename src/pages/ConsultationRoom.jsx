@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useWebRTC } from '../../hooks/useWebRTC';
-import axios from 'axios';
+import { useWebRTC } from '@/hooks/useWebRTC';
+import apiClient from '@/lib/api';
 
 const ConsultationRoom = () => {
   const { appointmentId } = useParams();
@@ -11,9 +11,7 @@ const ConsultationRoom = () => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        const response = await axios.get(`/api/telehealth/token/${appointmentId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const response = await apiClient.get(`/api/telehealth/token/${appointmentId}`);
         setRoomToken(response.data.token);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to join room");

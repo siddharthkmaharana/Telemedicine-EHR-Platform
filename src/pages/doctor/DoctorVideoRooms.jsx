@@ -1,21 +1,28 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Video, Clock } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
-import VideoConsultation from '@/pages/patient/VideoConsultation';
-import { motion } from 'framer-motion';
+import apiClient from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function DoctorVideoRooms() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeRoom, setActiveRoom] = useState(null);
+    const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        mockClient.entities.Appointment.filter({ doctor_email: user.email, status: 'confirmed' })
-            .then(appts => { setAppointments(appts); setLoading(false); });
+        apiClient.get('/appointments/doctor/me')
+            .then(res => {
+                setAppointments(res.data.filter(a => a.status === 'approved' || a.status === 'confirmed'));
+                setLoading(false);
+            });
     }, []);
+
+    const startRoom = (apptId) => {
+        navigate(`/consultation/${apptId}`);
+    };
 
     if (activeRoom) {
         return (
@@ -43,21 +50,21 @@ export default function DoctorVideoRooms() {
                 <div className="space-y-4 max-w-2xl">
                     {appointments.map((appt, i) => {
                         const now = new Date();
-                        const startTime = new Date(`${appt.date}T${appt.start_time}`);
+                        const startTime = new Date(appt.startTime);
                         const diff = (startTime - now) / 60000;
                         const canStart = diff <= 10 && diff >= -60;
                         return (
-                            <motion.div key={appt.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                            <motion.div key={appt._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                                 className="card-surface p-6">
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
-                                        <div className="font-semibold text-[#F1F5F9]">{appt.patient_name}</div>
-                                        <div className="text-xs text-[#64748B] mt-0.5 flex items-center gap-1.5"><Clock size={11} />{appt.date} at {appt.start_time}</div>
+                                        <div className="font-semibold text-[#F1F5F9]">{appt.patientId?.userId?.firstName} {appt.patientId?.userId?.lastName}</div>
+                                        <div className="text-xs text-[#64748B] mt-0.5 flex items-center gap-1.5"><Clock size={11} />{new Date(appt.startTime).toLocaleString()}</div>
                                     </div>
                                     <StatusBadge status={appt.status} />
                                 </div>
                                 <motion.button whileHover={canStart ? { scale: 1.02 } : {}} whileTap={canStart ? { scale: 0.97 } : {}}
-                                    onClick={() => canStart && setActiveRoom(appt)} disabled={!canStart}
+                                    onClick={() => canStart && startRoom(appt._id)} disabled={!canStart}
                                     className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2"
                                     style={{ background: canStart ? '#7C3AED' : 'rgba(255,255,255,0.05)', color: canStart ? '#fff' : '#64748B', cursor: canStart ? 'pointer' : 'not-allowed' }}>
                                     <Video size={16} />

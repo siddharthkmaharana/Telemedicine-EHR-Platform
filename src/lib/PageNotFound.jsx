@@ -1,5 +1,4 @@
 import { useLocation } from 'react-router-dom';
-import { mockClient } from '@/lib/mockClient';
 import { useQuery } from '@tanstack/react-query';
 
 
