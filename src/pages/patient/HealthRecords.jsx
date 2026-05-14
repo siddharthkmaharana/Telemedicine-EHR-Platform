@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Lock, ChevronRight, Upload, X } from 'lucide-react';
 import apiClient from '@/lib/api';
 import EmptyState from '@/components/medisync/EmptyState';
-import { format, parseISO } from 'date-fns';
 
 export default function HealthRecords() {
     const [records, setRecords] = useState([]);

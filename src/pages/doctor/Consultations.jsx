@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, X, FileText } from 'lucide-react';
+import { Search, ChevronDown, FileText } from 'lucide-react';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 import { useNavigate } from 'react-router-dom';

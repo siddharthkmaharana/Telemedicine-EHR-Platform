@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, Star, ChevronLeft, Clock, Calendar, Stethoscope } from 'lucide-react';
+import { CheckCircle, Star, ChevronLeft, Stethoscope } from 'lucide-react';
 import apiClient from '@/lib/api';
 import { format, addDays } from 'date-fns';
 
