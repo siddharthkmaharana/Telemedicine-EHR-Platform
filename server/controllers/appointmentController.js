@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const { checkForCollision } = require('../services/schedulingEngine');
+const notificationService = require('../services/notificationService');
 
 exports.createAppointment = async (req, res) => {
   try {
@@ -25,6 +26,26 @@ exports.createAppointment = async (req, res) => {
     });
 
     await appointment.save();
+
+    // Fetch Patient and Doctor details for notification
+    const populatedAppointment = await Appointment.findById(appointment._id)
+      .populate({ path: 'patientId', populate: { path: 'userId' } })
+      .populate({ path: 'doctorId', populate: { path: 'userId' } });
+
+    if (populatedAppointment && populatedAppointment.patientId && populatedAppointment.doctorId) {
+      const patient = populatedAppointment.patientId.userId;
+      const doctor = populatedAppointment.doctorId.userId;
+      
+      const patientName = `${patient.firstName} ${patient.lastName}`;
+      const doctorName = `${doctor.firstName} ${doctor.lastName}`;
+
+      // Trigger email asynchronously
+      notificationService.sendAppointmentConfirmation(patient.email, patientName, doctorName, start);
+      
+      // Mock SMS
+      notificationService.sendSMS("patient-phone-number", `Your appointment with Dr. ${doctorName} on ${start.toLocaleString()} is confirmed.`);
+    }
+
     res.status(201).json({ success: true, data: appointment });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

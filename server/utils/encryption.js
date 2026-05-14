@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 require('dotenv').config();
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex'); // 32 bytes for AES-256
+const ENCRYPTION_KEY = process.env.AES_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex'); // 32 bytes for AES-256
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 const SALT_LENGTH = 64;
