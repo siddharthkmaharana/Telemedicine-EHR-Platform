@@ -39,7 +39,6 @@ import AdminAppointments from './pages/admin/AdminAppointments';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AuditLogs from './pages/admin/AuditLogs';
 import AdminSettings from './pages/admin/AdminSettings';
-import ConsultationRoom from './pages/ConsultationRoom';
 
 const AuthenticatedApp = () => {
     // We are keeping AuthProvider to avoid breaking anything that depends on it,
