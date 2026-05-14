@@ -14,11 +14,17 @@ const limiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
-app.use('/api/', limiter);
+// app.use('/api/', limiter);
 
 // Middlewares
 app.use(cors());
 app.use(express.json());
+
+// Request Logger
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 // Basic Route for testing
 app.get('/health', (req, res) => {
@@ -28,6 +34,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/patients', require('./routes/patientRoutes'));
+app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/records', require('./routes/recordRoutes'));
 app.use('/api/appointments', require('./routes/appointmentRoutes'));
 app.use('/api/telehealth', require('./routes/telehealthRoutes'));

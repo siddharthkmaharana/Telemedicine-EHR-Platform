@@ -1,6 +1,26 @@
 const Patient = require('../models/Patient');
 const AuditLog = require('../models/AuditLog');
 
+exports.getAllPatients = async (req, res) => {
+  try {
+    const patients = await Patient.find({}).populate('userId', 'firstName lastName email role');
+    res.json(patients);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPatientProfileMe = async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ userId: req.user.userId })
+      .populate('userId', 'firstName lastName email role');
+    if (!patient) return res.status(404).json({ message: 'Patient profile not found' });
+    res.json(patient);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getPatientProfile = async (req, res) => {
   try {
     const { id } = req.params;

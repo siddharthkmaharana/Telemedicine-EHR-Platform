@@ -10,7 +10,7 @@ const doctorSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  licenseNumber: {
+  licenseId: {
     type: String,
     required: true,
     unique: true,
@@ -30,6 +30,18 @@ const doctorSchema = new mongoose.Schema({
   }],
   bio: {
     type: String
+  },
+  experienceYears: {
+    type: Number,
+    default: 0
+  },
+  rating: {
+    type: Number,
+    default: 4.5
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, { timestamps: true });
 

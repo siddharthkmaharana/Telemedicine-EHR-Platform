@@ -8,12 +8,15 @@ const authenticate = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+    console.log(`[AUTH] Token received for endpoint: ${req.originalUrl}`);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log(`[AUTH] Decoded User: ${decoded.userId}, Role: ${decoded.role}`);
     
     // Attach user info to request
     req.user = decoded;
     next();
   } catch (error) {
+    console.error(`[AUTH ERROR] ${error.message}`);
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };

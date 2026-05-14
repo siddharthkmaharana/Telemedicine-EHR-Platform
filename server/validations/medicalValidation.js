@@ -18,11 +18,11 @@ const createMedicalRecordSchema = z.object({
 
 // Schema for creating an Appointment
 const createAppointmentSchema = z.object({
-  patientId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Patient ID format"),
   doctorId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid Doctor ID format"),
   startTime: z.string().datetime("Start time must be a valid ISO-8601 date"),
   endTime: z.string().datetime("End time must be a valid ISO-8601 date"),
-  timezone: z.string().default("UTC")
+  timezone: z.string().default("UTC"),
+  notes: z.string().optional()
 });
 
 // Schema for updating a Patient Profile

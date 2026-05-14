@@ -7,14 +7,16 @@ const { generateRoomToken } = require('../services/roomTokenService');
 router.get('/token/:appointmentId', auth, async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const appointment = await Appointment.findById(appointmentId);
+    const appointment = await Appointment.findById(appointmentId)
+      .populate({ path: 'patientId', select: 'userId' })
+      .populate({ path: 'doctorId', select: 'userId' });
 
     if (!appointment) return res.status(404).json({ message: "Appointment not found" });
 
     // Authorization: Only the patient or doctor assigned to this appointment can get a token
     const isAuthorized = 
-      appointment.patientId.toString() === req.user.userId || 
-      appointment.doctorId.toString() === req.user.userId;
+      appointment.patientId.userId.toString() === req.user.userId || 
+      appointment.doctorId.userId.toString() === req.user.userId;
 
     if (!isAuthorized) return res.status(403).json({ message: "Unauthorized access to this room" });
 

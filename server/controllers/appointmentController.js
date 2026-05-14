@@ -1,4 +1,6 @@
 const Appointment = require('../models/Appointment');
+const Patient = require('../models/Patient');
+const Doctor = require('../models/Doctor');
 const { checkForCollision } = require('../services/schedulingEngine');
 
 exports.createAppointment = async (req, res) => {
@@ -7,6 +9,12 @@ exports.createAppointment = async (req, res) => {
 
     const start = new Date(startTime);
     const end = new Date(endTime);
+
+    // Get the patient record ID for the logged-in user
+    const patient = await Patient.findOne({ userId: req.user.userId });
+    if (!patient) {
+      return res.status(404).json({ success: false, message: "Patient profile not found." });
+    }
 
     // Collision Check
     const isColliding = await checkForCollision(doctorId, start, end);
@@ -19,6 +27,7 @@ exports.createAppointment = async (req, res) => {
 
     const appointment = new Appointment({
       ...req.body,
+      patientId: patient._id,
       startTime: start,
       endTime: end,
       status: 'pending'
@@ -33,16 +42,57 @@ exports.createAppointment = async (req, res) => {
 
 exports.getAppointments = async (req, res) => {
   try {
-    let query = {};
-    if (req.user.role === 'patient') {
-      query.patientId = req.user.userId;
-    } else if (req.user.role === 'doctor') {
-      query.doctorId = req.user.userId;
-    }
-
-    const appointments = await Appointment.find(query).populate('patientId doctorId');
-    res.json({ success: true, data: appointments });
+    const appointments = await Appointment.find({})
+      .populate({ path: 'patientId', populate: { path: 'userId', select: 'firstName lastName email' } })
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName email' } });
+    res.json(appointments);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPatientAppointments = async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ userId: req.user.userId });
+    if (!patient) return res.status(404).json({ message: "Patient profile not found" });
+
+    const appointments = await Appointment.find({ patientId: patient._id })
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName email' } })
+      .sort({ startTime: -1 });
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getDoctorAppointments = async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user.userId });
+    if (!doctor) return res.status(404).json({ message: "Doctor profile not found" });
+
+    const appointments = await Appointment.find({ doctorId: doctor._id })
+      .populate({ path: 'patientId', populate: { path: 'userId', select: 'firstName lastName email' } })
+      .sort({ startTime: -1 });
+    res.json(appointments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateAppointmentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const appointment = await Appointment.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+
+    if (!appointment) return res.status(404).json({ message: "Appointment not found" });
+    res.json(appointment);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
