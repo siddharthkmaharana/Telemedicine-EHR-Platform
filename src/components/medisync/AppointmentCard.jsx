@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Video, User } from 'lucide-react';
+import { Calendar, Clock, Video } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 import { format, parseISO } from 'date-fns';
 
