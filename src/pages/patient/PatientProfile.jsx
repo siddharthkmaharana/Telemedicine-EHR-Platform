@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Save, Shield, Clock } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 
 export default function PatientProfile() {
     const [patient, setPatient] = useState(null);
@@ -11,23 +11,28 @@ export default function PatientProfile() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        mockClient.entities.Patient.filter({ user_email: user.email }).then(pts => {
-            setPatient(pts[0] || { user_email: user.email, full_name: user.name, blood_group: 'O+', allergies: ['Penicillin'] });
-            setLoading(false);
-        });
+        apiClient.get(`/patients/${user.userId || ''}`)
+            .then(res => {
+                setPatient(res.data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
     }, []);
 
     const save = async () => {
         setSaving(true);
-        if (patient.id) {
-            await mockClient.entities.Patient.update(patient.id, patient);
-        } else {
-            const created = await mockClient.entities.Patient.create(patient);
-            setPatient(created);
+        try {
+            await apiClient.put(`/patients/${patient._id}`, patient);
+            setSaving(false);
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (err) {
+            console.error(err);
+            setSaving(false);
         }
-        setSaving(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
     };
 
     if (loading) return <div className="card-surface h-96 shimmer" />;
@@ -42,7 +47,7 @@ export default function PatientProfile() {
                     <div className="relative">
                         <div className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-3xl"
                             style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.1))', color: '#F59E0B' }}>
-                            {patient?.full_name?.charAt(0) || 'A'}
+                            {patient?.userId?.firstName?.charAt(0) || 'P'}
                         </div>
                         <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center"
                             style={{ background: '#F59E0B' }}>
@@ -50,8 +55,8 @@ export default function PatientProfile() {
                         </button>
                     </div>
                     <div>
-                        <div className="text-lg font-bold text-[#F1F5F9]">{patient?.full_name}</div>
-                        <div className="text-sm text-[#64748B]">{user.email}</div>
+                        <div className="text-lg font-bold text-[#F1F5F9]">{patient?.userId?.firstName} {patient?.userId?.lastName}</div>
+                        <div className="text-sm text-[#64748B]">{patient?.userId?.email}</div>
                     </div>
                 </div>
             </div>
@@ -61,10 +66,9 @@ export default function PatientProfile() {
                 <h3 className="text-sm font-semibold text-[#F1F5F9] uppercase tracking-wider">Personal Information</h3>
                 <div className="grid grid-cols-2 gap-4">
                     {[
-                        { label: 'Full Name', key: 'full_name', type: 'text' },
+                        { label: 'Blood Group', key: 'bloodGroup', type: 'select', options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
                         { label: 'Date of Birth', key: 'dob', type: 'date' },
                         { label: 'Phone', key: 'phone', type: 'tel' },
-                        { label: 'Blood Group', key: 'blood_group', type: 'select', options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] },
                     ].map(field => (
                         <div key={field.key}>
                             <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">{field.label}</label>
@@ -96,13 +100,13 @@ export default function PatientProfile() {
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="text-xs text-[#64748B] mb-1.5 block">Name</label>
-                        <input type="text" value={patient?.emergency_contact_name || ''} onChange={e => setPatient(p => ({ ...p, emergency_contact_name: e.target.value }))}
+                        <input type="text" value={patient?.emergencyContactName || ''} onChange={e => setPatient(p => ({ ...p, emergencyContactName: e.target.value }))}
                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                     </div>
                     <div>
                         <label className="text-xs text-[#64748B] mb-1.5 block">Phone</label>
-                        <input type="tel" value={patient?.emergency_contact_phone || ''} onChange={e => setPatient(p => ({ ...p, emergency_contact_phone: e.target.value }))}
+                        <input type="tel" value={patient?.emergencyContactPhone || ''} onChange={e => setPatient(p => ({ ...p, emergencyContactPhone: e.target.value }))}
                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                     </div>

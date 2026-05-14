@@ -1,36 +1,41 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import apiClient from './api';
 const MediSyncContext = createContext(null);
-
-const DEMO_USERS = {
-    'patient@medisync.com': { role: 'patient', name: 'Siddharth kumar Maharana', password: 'Demo@123' },
-    'doctor@medisync.com': { role: 'doctor', name: 'Dr. Samay Shukla', password: 'Demo@123' },
-    'admin@medisync.com': { role: 'admin', name: 'System Admin', password: 'Demo@123' },
-};
 
 export function MediSyncProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const stored = localStorage.getItem('medisync_user');
         if (stored) {
             try { setCurrentUser(JSON.parse(stored)); } catch { }
         }
+        setLoading(false);
     }, []);
 
-    const login = (email, password) => {
-        const user = DEMO_USERS[email];
-        if (!user || user.password !== password) {
-            throw new Error('Invalid credentials');
+    const login = async (email, password) => {
+        try {
+            const response = await apiClient.post('/auth/login', { email, password });
+            const { token, role, userId } = response.data;
+            
+            const userData = { email, role, userId, loginTime: new Date().toISOString() };
+            
+            // For now, if name is not returned, we can use a placeholder or handle it later
+            userData.name = role.charAt(0).toUpperCase() + role.slice(1); 
+
+            setCurrentUser(userData);
+            localStorage.setItem('medisync_token', token);
+            localStorage.setItem('medisync_user', JSON.stringify(userData));
+            return userData;
+        } catch (error) {
+            throw new Error(error.response?.data?.message || 'Invalid credentials');
         }
-        const userData = { email, role: user.role, name: user.name, loginTime: new Date().toISOString() };
-        setCurrentUser(userData);
-        localStorage.setItem('medisync_user', JSON.stringify(userData));
-        return userData;
     };
 
     const logout = () => {
         setCurrentUser(null);
+        localStorage.removeItem('medisync_token');
         localStorage.removeItem('medisync_user');
         window.location.href = '/';
     };

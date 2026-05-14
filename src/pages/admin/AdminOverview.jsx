@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, UserCheck, Calendar, Video, FileText, Activity } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatCard from '@/components/medisync/StatCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { format, subDays } from 'date-fns';
+import apiClient from '@/lib/api';
 
 const COLORS = ['#00D9B8', '#7C3AED', '#F59E0B', '#EF4444', '#818CF8'];
 
@@ -27,31 +27,45 @@ export default function AdminOverview() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        Promise.all([
-            mockClient.entities.Patient.list(),
-            mockClient.entities.Doctor.list(),
-            mockClient.entities.Appointment.list(),
-            mockClient.entities.Prescription.list(),
-            mockClient.entities.AuditLog.list('-created_date', 10),
-        ]).then(([pts, docs, appts, rxs, logs]) => {
-            setPatients(pts); setDoctors(docs); setAppointments(appts);
-            setPrescriptions(rxs); setAuditLogs(logs); setLoading(false);
-        });
+        const fetchData = async () => {
+            try {
+                const [ptsRes, docsRes, apptsRes, rxsRes, logsRes] = await Promise.all([
+                    apiClient.get('/patients'),
+                    apiClient.get('/doctors'),
+                    apiClient.get('/appointments'),
+                    apiClient.get('/prescriptions'),
+                    apiClient.get('/audit'),
+                ]);
+                setPatients(ptsRes.data);
+                setDoctors(docsRes.data);
+                setAppointments(apptsRes.data);
+                setPrescriptions(rxsRes.data);
+                setAuditLogs(logsRes.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Failed to fetch admin dashboard", err);
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
 
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const todayAppts = appointments.filter(a => a.date === today);
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const todayAppts = appointments.filter(a => a.startTime?.startsWith(todayStr));
 
     // Chart data: last 30 days
     const lineData = Array.from({ length: 30 }, (_, i) => {
         const date = format(subDays(new Date(), 29 - i), 'MMM d');
         const dateStr = format(subDays(new Date(), 29 - i), 'yyyy-MM-dd');
-        return { date, count: appointments.filter(a => a.date === dateStr).length };
+        return { date, count: appointments.filter(a => a.startTime?.startsWith(dateStr)).length };
     });
 
     // Specialization donut
     const specCounts = {};
-    appointments.forEach(a => { specCounts[a.doctor_specialization || 'General'] = (specCounts[a.doctor_specialization || 'General'] || 0) + 1; });
+    appointments.forEach(a => { 
+        const spec = a.doctorId?.specialization || 'General';
+        specCounts[spec] = (specCounts[spec] || 0) + 1; 
+    });
     const pieData = Object.entries(specCounts).map(([name, value]) => ({ name, value }));
 
     // Weekly registrations (mock)
@@ -137,17 +151,17 @@ export default function AdminOverview() {
                     ) : (
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                             {auditLogs.map((log, i) => (
-                                <motion.div key={log.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+                                <motion.div key={log._id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
                                     className="flex items-center gap-3 p-3 rounded-xl"
-                                    style={{ background: log.is_phi ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.04)' }}>
+                                    style={{ background: log.isPhi ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.04)' }}>
                                     <div className="w-2 h-2 rounded-full flex-shrink-0"
                                         style={{ background: log.action === 'READ' ? '#00D9B8' : log.action === 'WRITE' ? '#7C3AED' : '#EF4444' }} />
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-xs text-[#F1F5F9] truncate">{log.description || `${log.action} ${log.resource_type}`}</div>
-                                        <div className="text-xs text-[#64748B]">{log.user_email} · {log.user_role}</div>
+                                        <div className="text-xs text-[#F1F5F9] truncate">{log.description || `${log.action} ${log.resourceType}`}</div>
+                                        <div className="text-xs text-[#64748B]">{log.userId?.email} · {log.userId?.role}</div>
                                     </div>
-                                    <div className="text-xs" style={{ color: log.is_phi ? '#F59E0B' : '#64748B' }}>
-                                        {log.is_phi ? '🔒 PHI' : log.action}
+                                    <div className="text-xs" style={{ color: log.isPhi ? '#F59E0B' : '#64748B' }}>
+                                        {log.isPhi ? '🔒 PHI' : log.action}
                                     </div>
                                 </motion.div>
                             ))}

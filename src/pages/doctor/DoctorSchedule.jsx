@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import { format, addDays, startOfWeek } from 'date-fns';
+import apiClient from '@/lib/api';
 
 const TIME_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
 
@@ -14,14 +14,16 @@ export default function DoctorSchedule() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        mockClient.entities.Appointment.filter({ doctor_email: user.email }).then(setAppointments);
+        apiClient.get('/appointments/doctor/me')
+            .then(res => setAppointments(res.data))
+            .catch(err => console.error(err));
     }, []);
 
     const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
     const getApptForSlot = (date, time) => {
         const dateStr = format(date, 'yyyy-MM-dd');
-        return appointments.find(a => a.date === dateStr && a.start_time === time);
+        return appointments.find(a => a.startTime?.startsWith(dateStr) && a.startTime?.includes(`T${time}`));
     };
 
     return (
@@ -71,7 +73,7 @@ export default function DoctorSchedule() {
                                                 <button onClick={() => setSelectedAppt(appt)}
                                                     className="w-full px-2 py-1.5 rounded-lg text-left transition-all hover:scale-105"
                                                     style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}>
-                                                    <div className="text-xs font-medium text-[#F1F5F9] truncate">{appt.patient_name}</div>
+                                                    <div className="text-xs font-medium text-[#F1F5F9] truncate">{appt.patientId?.userId?.firstName} {appt.patientId?.userId?.lastName}</div>
                                                     <div className="mt-0.5"><StatusBadge status={appt.status} size="xs" /></div>
                                                 </button>
                                             ) : (
@@ -95,10 +97,10 @@ export default function DoctorSchedule() {
                         <h3 className="text-base font-bold text-[#F1F5F9] mb-4">Appointment Details</h3>
                         <div className="space-y-3 text-sm">
                             {[
-                                { label: 'Patient', value: selectedAppt.patient_name },
-                                { label: 'Date', value: selectedAppt.date },
-                                { label: 'Time', value: selectedAppt.start_time },
-                                { label: 'Chief Complaint', value: selectedAppt.chief_complaint || 'N/A' },
+                                { label: 'Patient', value: `${selectedAppt.patientId?.userId?.firstName} ${selectedAppt.patientId?.userId?.lastName}` },
+                                { label: 'Date', value: new Date(selectedAppt.startTime).toLocaleDateString() },
+                                { label: 'Time', value: new Date(selectedAppt.startTime).toLocaleTimeString() },
+                                { label: 'Chief Complaint', value: selectedAppt.notes || 'N/A' },
                             ].map(item => (
                                 <div key={item.label} className="flex justify-between">
                                     <span className="text-[#64748B]">{item.label}</span>

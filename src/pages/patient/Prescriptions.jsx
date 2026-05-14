@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Pill, Download, QrCode } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
+import apiClient from '@/lib/api';
 
 export default function Prescriptions() {
     const [prescriptions, setPrescriptions] = useState([]);
@@ -12,28 +12,33 @@ export default function Prescriptions() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        mockClient.entities.Prescription.filter({ patient_email: user.email })
-            .then(r => { setPrescriptions(r); setLoading(false); });
+        apiClient.get('/prescriptions/patient/me')
+            .then(res => { setPrescriptions(res.data); setLoading(false); })
+            .catch(err => { console.error(err); setLoading(false); });
     }, []);
 
-    const parseMeds = (medStr) => {
-        try { return JSON.parse(medStr); } catch { return []; }
-    };
-
-    const downloadPrescription = (rx) => {
-        const content = `MEDISYNC PRESCRIPTION\n${'='.repeat(40)}\nPatient: ${rx.patient_name}\nDoctor: ${rx.doctor_name}\nDate: ${rx.issued_date}\n\nDiagnosis: ${rx.diagnosis_summary || 'N/A'}\n\nMEDICATIONS:\n${parseMeds(rx.medications).map(m => `• ${m.drug_name} - ${m.dosage} - ${m.frequency} - ${m.duration}`).join('\n') || 'See medications list'}\n\nInstructions: ${rx.additional_instructions || 'N/A'}\n\nSignature Hash: ${rx.signature_hash || 'SHA256:' + Math.random().toString(36).slice(2)}\n\nThis is a digitally signed prescription from MediSync.`;
-        const blob = new Blob([content], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `prescription_${rx.id?.slice(0, 8)}.txt`;
-        a.click();
+    const downloadPrescription = async (rx) => {
+        try {
+            const response = await apiClient.get(`/prescriptions/${rx._id}/download`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `prescription_${rx._id}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            console.error("Download failed", err);
+        }
     };
 
     if (loading) return <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1, 2, 3].map(i => <div key={i} className="card-surface h-48 shimmer" />)}</div>;
 
     if (prescriptions.length === 0) return (
         <div className="card-surface">
-            <EmptyState icon={Pill} title="No Prescriptions" message="Prescriptions from your doctors will appear here" color="amber" />
+            <EmptyState icon={Pill} title="No Prescriptions" message="Prescriptions from your doctors will appear here" color="amber" action={() => {}} actionLabel="" />
         </div>
     );
 
@@ -42,14 +47,14 @@ export default function Prescriptions() {
             <h2 className="text-xl font-bold text-[#F1F5F9]">My Prescriptions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {prescriptions.map((rx, i) => {
-                    const meds = parseMeds(rx.medications);
+                    const meds = rx.medications || [];
                     return (
-                        <motion.div key={rx.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                        <motion.div key={rx._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                             className="card-surface p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <div className="font-semibold text-[#F1F5F9]">{rx.diagnosis_summary || 'General Prescription'}</div>
-                                    <div className="text-xs text-[#64748B] mt-0.5">{rx.doctor_name} · {rx.issued_date}</div>
+                                    <div className="font-semibold text-[#F1F5F9]">{rx.diagnosisSummary || 'General Prescription'}</div>
+                                    <div className="text-xs text-[#64748B] mt-0.5">{rx.doctorId?.userId?.firstName} {rx.doctorId?.userId?.lastName} · {new Date(rx.createdAt).toLocaleDateString()}</div>
                                 </div>
                                 <StatusBadge status={rx.status || 'active'} />
                             </div>
@@ -60,7 +65,7 @@ export default function Prescriptions() {
                                         <div key={j} className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
                                             style={{ background: 'rgba(255,255,255,0.04)' }}>
                                             <div className="w-2 h-2 rounded-full" style={{ background: '#F59E0B' }} />
-                                            <span className="font-medium text-[#F1F5F9]">{med.drug_name}</span>
+                                            <span className="font-medium text-[#F1F5F9]">{med.drugName}</span>
                                             <span className="text-[#64748B]">{med.dosage} · {med.frequency}</span>
                                         </div>
                                     ))}
@@ -100,7 +105,7 @@ export default function Prescriptions() {
                                 ))}
                             </div>
                         </div>
-                        <p className="text-xs text-[#64748B]">Rx ID: {qrModal.id?.slice(0, 12)}...</p>
+                        <p className="text-xs text-[#64748B]">Rx ID: {qrModal._id?.slice(0, 12)}...</p>
                         <button onClick={() => setQrModal(null)} className="mt-4 px-6 py-2.5 rounded-xl text-sm font-semibold"
                             style={{ background: 'rgba(255,255,255,0.08)', color: '#F1F5F9' }}>Close</button>
                     </motion.div>

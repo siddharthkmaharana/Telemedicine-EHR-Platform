@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
@@ -25,10 +25,14 @@ export default function AdminAnalytics() {
 
     useEffect(() => {
         Promise.all([
-            mockClient.entities.Appointment.list(),
-            mockClient.entities.Doctor.list(),
-            mockClient.entities.Prescription.list(),
-        ]).then(([a, d, p]) => { setAppointments(a); setDoctors(d); setPrescriptions(p); });
+            apiClient.get('/appointments'),
+            apiClient.get('/doctors'),
+            apiClient.get('/prescriptions'),
+        ]).then(([a, d, p]) => { 
+            setAppointments(a.data); 
+            setDoctors(d.data); 
+            setPrescriptions(p.data); 
+        }).catch(err => console.error(err));
     }, []);
 
     // Heatmap grid (random seed + real data)
@@ -36,8 +40,8 @@ export default function AdminAnalytics() {
         hour,
         ...DAYS.reduce((acc, day) => {
             const count = appointments.filter(a => {
-                const d = new Date(a.date || '');
-                return d.getDay() === DAYS.indexOf(day) + 1 && a.start_time?.startsWith(hour.split(':')[0]);
+                const d = new Date(a.startTime || '');
+                return d.getDay() === DAYS.indexOf(day) + 1 && a.startTime?.includes(`T${hour.split(':')[0]}`);
             }).length;
             return { ...acc, [day]: count || Math.floor(Math.random() * 5) };
         }, {}),
@@ -45,10 +49,10 @@ export default function AdminAnalytics() {
 
     // Doctor performance
     const doctorPerf = doctors.map(doc => ({
-        name: doc.full_name?.split(' ').slice(-1)[0] || 'Unknown',
-        consultations: appointments.filter(a => a.doctor_email === doc.user_email).length,
+        name: doc.userId?.lastName || doc.userId?.firstName || 'Unknown',
+        consultations: appointments.filter(a => a.doctorId?._id === doc._id || a.doctorId === doc._id).length,
         rating: doc.rating || 4.5,
-        prescriptions: prescriptions.filter(p => p.doctor_email === doc.user_email).length,
+        prescriptions: prescriptions.filter(p => p.doctorId?._id === doc._id || p.doctorId === doc._id).length,
     }));
 
     // Age distribution (mock)
@@ -143,7 +147,7 @@ export default function AdminAnalytics() {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                             <XAxis dataKey="group" tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} />
                             <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false} />
-                            <Tooltip content={<CustomTooltip />} />
+                            <Tooltip content={CustomTooltip} />
                             <Bar dataKey="count" radius={[6, 6, 0, 0]} name="Patients">
                                 {ageData.map((_, i) => <Cell key={i} fill={i === 2 ? '#00D9B8' : 'rgba(0,217,184,0.4)'} />)}
                             </Bar>
@@ -161,7 +165,7 @@ export default function AdminAnalytics() {
                         <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} />
                         <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false}
                             tickFormatter={v => `₹${(v / 1000).toFixed(0)}k`} />
-                        <Tooltip content={<CustomTooltip />} />
+                        <Tooltip content={CustomTooltip} />
                         <Bar dataKey="revenue" fill="#7C3AED" radius={[6, 6, 0, 0]} name="Revenue (₹)" />
                     </BarChart>
                 </ResponsiveContainer>

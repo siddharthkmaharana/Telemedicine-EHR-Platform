@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Save, AlertTriangle, Shield, Bell, Clock, Building2 } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 
 export default function AdminSettings() {
     const [settings, setSettings] = useState({
@@ -18,23 +17,24 @@ export default function AdminSettings() {
     });
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [settingId, setSettingId] = useState(null);
 
     useEffect(() => {
-        mockClient.entities.ClinicSettings.list().then(s => {
-            if (s.length > 0) { setSettings(s[0]); setSettingId(s[0].id); }
-        });
+        const localSettings = localStorage.getItem('medisync_settings');
+        if (localSettings) {
+            try {
+                setSettings(JSON.parse(localSettings));
+            } catch (e) {
+                console.error(e);
+            }
+        }
     }, []);
 
     const save = async () => {
         setSaving(true);
-        if (settingId) {
-            await mockClient.entities.ClinicSettings.update(settingId, settings);
-        } else {
-            const created = await mockClient.entities.ClinicSettings.create(settings);
-            setSettingId(created.id);
-        }
-        setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+        localStorage.setItem('medisync_settings', JSON.stringify(settings));
+        setSaving(false); 
+        setSaved(true); 
+        setTimeout(() => setSaved(false), 2000);
     };
 
     const Section = ({ title, icon: SectionIcon, children }) => (

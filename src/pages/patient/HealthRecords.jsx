@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Lock, ChevronRight, Upload, X } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 import EmptyState from '@/components/medisync/EmptyState';
 import { format, parseISO } from 'date-fns';
 
@@ -12,8 +12,9 @@ export default function HealthRecords() {
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        mockClient.entities.MedicalRecord.filter({ patient_email: user.email })
-            .then(r => { setRecords(r); setLoading(false); });
+        apiClient.get(`/records/${user.userId || ''}`)
+            .then(res => { setRecords(res.data); setLoading(false); })
+            .catch(err => { console.error(err); setLoading(false); });
     }, []);
 
     return (

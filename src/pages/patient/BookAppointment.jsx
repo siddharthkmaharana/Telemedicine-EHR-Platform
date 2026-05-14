@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Star, ChevronLeft, Clock, Calendar, Stethoscope } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 import { format, addDays } from 'date-fns';
 
 const SPECIALIZATIONS = ['Cardiology', 'Dermatology', 'General', 'Neurology', 'Orthopedics', 'Pediatrics', 'Gynecology', 'Psychiatry', 'Ophthalmology', 'ENT'];
@@ -29,36 +29,32 @@ export default function BookAppointment() {
 
     useEffect(() => {
         if (specialization) {
-            mockClient.entities.Doctor.filter({ specialization, is_active: true }).then(setDoctors);
+            apiClient.get(`/doctors?specialization=${specialization}`).then(res => setDoctors(res.data));
         }
     }, [specialization]);
 
     useEffect(() => {
         if (selectedDoctor && selectedDate) {
-            mockClient.entities.Appointment.filter({ doctor_email: selectedDoctor.user_email, date: selectedDate })
-                .then(appts => setBookedSlots(appts.map(a => a.start_time)));
+            apiClient.get(`/appointments/doctor/${selectedDoctor._id}?date=${selectedDate}`)
+                .then(res => setBookedSlots(res.data.map(a => a.startTime)));
         }
     }, [selectedDoctor, selectedDate]);
 
     const handleConfirm = async () => {
         setLoading(true);
-        const roomToken = `room_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        await mockClient.entities.Appointment.create({
-            patient_email: user.email,
-            patient_name: user.name,
-            doctor_email: selectedDoctor.user_email,
-            doctor_name: selectedDoctor.full_name,
-            doctor_specialization: selectedDoctor.specialization,
-            date: selectedDate,
-            start_time: selectedTime,
-            end_time: `${parseInt(selectedTime.split(':')[0])}:${selectedTime.split(':')[1] === '00' ? '30' : '00'}`,
-            status: 'confirmed',
-            room_token: roomToken,
-            chief_complaint: chiefComplaint,
-            duration_minutes: 30,
-        });
-        setLoading(false);
-        setConfirmed(true);
+        try {
+            await apiClient.post('/appointments', {
+                doctorId: selectedDoctor._id,
+                startTime: `${selectedDate}T${selectedTime}:00Z`, // Simplified UTC conversion
+                endTime: `${selectedDate}T${selectedTime.split(':')[0]}:${selectedTime.split(':')[1] === '00' ? '30' : '00'}:00Z`,
+                notes: chiefComplaint,
+            });
+            setLoading(false);
+            setConfirmed(true);
+        } catch (err) {
+            console.error("Booking failed", err);
+            setLoading(false);
+        }
     };
 
     if (confirmed) {

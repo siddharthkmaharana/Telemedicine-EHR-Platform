@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Search, X, Star } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
+import apiClient from '@/lib/api';
 
 const SPECIALIZATIONS = ['Cardiology', 'Dermatology', 'General Medicine', 'Neurology', 'Orthopedics', 'Pediatrics', 'Gynecology', 'Psychiatry'];
 
@@ -13,29 +13,51 @@ export default function AdminDoctors() {
     const [search, setSearch] = useState('');
     const [showAdd, setShowAdd] = useState(false);
     const [confirmDeactivate, setConfirmDeactivate] = useState(null);
-    const [newDoc, setNewDoc] = useState({ full_name: '', specialization: 'Cardiology', license_id: '', consultation_fee: 500, is_active: true, rating: 4.5, experience_years: 5 });
+    const [newDoc, setNewDoc] = useState({ firstName: '', lastName: '', specialization: 'Cardiology', licenseId: '', consultationFee: 500, isActive: true, rating: 4.5, experienceYears: 5, email: '', password: 'Password123!' });
 
     useEffect(() => {
-        mockClient.entities.Doctor.list().then(d => { setDoctors(d); setLoading(false); });
+        apiClient.get('/doctors').then(res => { setDoctors(res.data); setLoading(false); });
     }, []);
 
     const addDoctor = async () => {
-        const created = await mockClient.entities.Doctor.create({ ...newDoc, user_email: `doctor${Date.now()}@medisync.com`, available_today: true });
-        setDoctors(d => [created, ...d]);
-        setShowAdd(false);
-        setNewDoc({ full_name: '', specialization: 'Cardiology', license_id: '', consultation_fee: 500, is_active: true, rating: 4.5, experience_years: 5 });
+        try {
+            // First create a user, then doctor profile? Or combined endpoint?
+            // Assuming the backend has a way to create a doctor with user details.
+            // Let's assume a dedicated registration endpoint or handled in controller.
+            const res = await apiClient.post('/auth/register', {
+                firstName: newDoc.firstName,
+                lastName: newDoc.lastName,
+                email: newDoc.email,
+                password: newDoc.password,
+                role: 'doctor',
+                specialization: newDoc.specialization,
+                licenseId: newDoc.licenseId,
+                consultationFee: newDoc.consultationFee,
+                experienceYears: newDoc.experienceYears
+            });
+            setDoctors(d => [res.data.doctor || res.data, ...d]);
+            setShowAdd(false);
+            setNewDoc({ firstName: '', lastName: '', specialization: 'Cardiology', licenseId: '', consultationFee: 500, isActive: true, rating: 4.5, experienceYears: 5, email: '', password: 'Password123!' });
+        } catch (err) {
+            console.error("Failed to add doctor", err);
+        }
     };
 
     const toggleStatus = async (doc) => {
-        await mockClient.entities.Doctor.update(doc.id, { is_active: !doc.is_active });
-        setDoctors(d => d.map(item => item.id === doc.id ? { ...item, is_active: !item.is_active } : item));
-        setConfirmDeactivate(null);
+        try {
+            await apiClient.put(`/doctors/${doc._id}`, { isActive: !doc.isActive });
+            setDoctors(d => d.map(item => item._id === doc._id ? { ...item, isActive: !item.isActive } : item));
+            setConfirmDeactivate(null);
+        } catch (err) {
+            console.error("Failed to toggle doctor status", err);
+        }
     };
 
-    const filtered = doctors.filter(d =>
-        d.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-        d.specialization?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = doctors.filter(d => {
+        const name = `${d.userId?.firstName || ''} ${d.userId?.lastName || ''}`;
+        return name.toLowerCase().includes(search.toLowerCase()) ||
+               d.specialization?.toLowerCase().includes(search.toLowerCase());
+    });
 
     return (
         <div className="space-y-6">
@@ -68,44 +90,47 @@ export default function AdminDoctors() {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map((doc, i) => (
-                                <motion.tr key={doc.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
-                                    style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
-                                    className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm"
-                                                style={{ background: 'rgba(0,217,184,0.15)', color: '#00D9B8' }}>
-                                                {doc.full_name?.charAt(0) || 'D'}
+                            {filtered.map((doc, i) => {
+                                const name = `${doc.userId?.firstName || ''} ${doc.userId?.lastName || ''}`;
+                                return (
+                                    <motion.tr key={doc._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                                        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+                                        className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm"
+                                                    style={{ background: 'rgba(0,217,184,0.15)', color: '#00D9B8' }}>
+                                                    {name.charAt(0) || 'D'}
+                                                </div>
+                                                <span className="text-sm font-medium text-[#F1F5F9]">{name}</span>
                                             </div>
-                                            <span className="text-sm font-medium text-[#F1F5F9]">{doc.full_name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{doc.specialization}</td>
-                                    <td className="px-5 py-4 text-sm text-[#64748B]">{doc.license_id || 'N/A'}</td>
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-1">
-                                            <Star size={13} fill="#F59E0B" color="#F59E0B" />
-                                            <span className="text-sm text-[#F1F5F9]">{doc.rating || 4.5}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-5 py-4">
-                                        <StatusBadge status={doc.is_active !== false ? 'active' : 'inactive'} />
-                                    </td>
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <button onClick={() => setConfirmDeactivate(doc)}
-                                                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
-                                                style={{
-                                                    background: doc.is_active !== false ? 'rgba(239,68,68,0.15)' : 'rgba(0,217,184,0.15)',
-                                                    color: doc.is_active !== false ? '#EF4444' : '#00D9B8'
-                                                }}>
-                                                {doc.is_active !== false ? 'Deactivate' : 'Activate'}
-                                            </button>
-                                        </div>
-                                    </td>
-                                </motion.tr>
-                            ))}
+                                        </td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{doc.specialization}</td>
+                                        <td className="px-5 py-4 text-sm text-[#64748B]">{doc.licenseId || 'N/A'}</td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-1">
+                                                <Star size={13} fill="#F59E0B" color="#F59E0B" />
+                                                <span className="text-sm text-[#F1F5F9]">{doc.rating || 4.5}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <StatusBadge status={doc.isActive !== false ? 'active' : 'inactive'} />
+                                        </td>
+                                        <td className="px-5 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => setConfirmDeactivate(doc)}
+                                                    className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
+                                                    style={{
+                                                        background: doc.isActive !== false ? 'rgba(239,68,68,0.15)' : 'rgba(0,217,184,0.15)',
+                                                        color: doc.isActive !== false ? '#EF4444' : '#00D9B8'
+                                                    }}>
+                                                    {doc.isActive !== false ? 'Deactivate' : 'Activate'}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </motion.tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -124,7 +149,15 @@ export default function AdminDoctors() {
                                 <button onClick={() => setShowAdd(false)}><X size={18} color="#64748B" /></button>
                             </div>
                             <div className="space-y-4">
-                                {[{ label: 'Full Name', key: 'full_name', type: 'text' }, { label: 'License ID', key: 'license_id', type: 'text' }, { label: 'Consultation Fee', key: 'consultation_fee', type: 'number' }, { label: 'Experience (Years)', key: 'experience_years', type: 'number' }].map(f => (
+                                {[
+                                    { label: 'First Name', key: 'firstName', type: 'text' },
+                                    { label: 'Last Name', key: 'lastName', type: 'text' },
+                                    { label: 'Email', key: 'email', type: 'email' },
+                                    { label: 'Password', key: 'password', type: 'password' },
+                                    { label: 'License ID', key: 'licenseId', type: 'text' },
+                                    { label: 'Consultation Fee', key: 'consultationFee', type: 'number' },
+                                    { label: 'Experience (Years)', key: 'experienceYears', type: 'number' }
+                                ].map(f => (
                                     <div key={f.key}>
                                         <label className="text-xs text-[#64748B] mb-1.5 block">{f.label}</label>
                                         <input type={f.type} value={newDoc[f.key]} onChange={e => setNewDoc(d => ({ ...d, [f.key]: f.type === 'number' ? parseFloat(e.target.value) : e.target.value }))}
@@ -140,7 +173,7 @@ export default function AdminDoctors() {
                                         {SPECIALIZATIONS.map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
-                                <motion.button onClick={addDoctor} disabled={!newDoc.full_name} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                                <motion.button onClick={addDoctor} disabled={!newDoc.firstName || !newDoc.email} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                                     className="w-full py-3 rounded-xl font-semibold text-sm disabled:opacity-50 mt-4"
                                     style={{ background: '#00D9B8', color: '#070B14' }}>
                                     Add Doctor

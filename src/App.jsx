@@ -83,9 +83,7 @@ const AuthenticatedApp = () => {
                 <Route path="settings" element={<AdminSettings />} />
             </Route>
 
-            {/* WebRTC Consultation Room (Shared for doctor and patient) */}
-            <Route path="/room/:appointmentId" element={<ConsultationRoom />} />
-
+            <Route path="/consultation/:appointmentId" element={<ConsultationRoom />} />
             <Route path="*" element={<PageNotFound />} />
         </Routes>
     );

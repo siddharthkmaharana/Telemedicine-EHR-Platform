@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Video, Mic, MicOff, VideoOff, PhoneOff, MessageSquare, Clock, Wifi } from 'lucide-react';
-import { mockClient } from '@/lib/mockClient';
+import apiClient from '@/lib/api';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -145,21 +145,25 @@ function VideoRoom({ appointment, onLeave }) {
     );
 }
 
+import { useNavigate } from 'react-router-dom';
+
 export default function VideoConsultation() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeRoom, setActiveRoom] = useState(null);
+    const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
     useEffect(() => {
-        mockClient.entities.Appointment.filter({ patient_email: user.email })
-            .then(appts => {
-                setAppointments(appts.filter(a => a.status === 'confirmed'));
+        apiClient.get('/appointments/patient/me')
+            .then(res => {
+                setAppointments(res.data.filter(a => a.status === 'approved' || a.status === 'confirmed'));
                 setLoading(false);
             });
     }, []);
 
-    if (activeRoom) return <VideoRoom appointment={activeRoom} onLeave={() => setActiveRoom(null)} />;
+    const joinRoom = (apptId) => {
+        navigate(`/consultation/${apptId}`);
+    };
 
     const now = new Date();
 
@@ -176,22 +180,22 @@ export default function VideoConsultation() {
             ) : (
                 <div className="space-y-4 max-w-2xl">
                     {appointments.map((appt, i) => {
-                        const startTime = new Date(`${appt.date}T${appt.start_time}`);
+                        const startTime = new Date(appt.startTime);
                         const diff = (startTime - now) / 60000;
                         const canJoin = diff <= 10 && diff >= -60;
 
                         return (
-                            <motion.div key={appt.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+                            <motion.div key={appt._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                                 className="card-surface p-6">
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
-                                        <div className="font-semibold text-[#F1F5F9]">{appt.doctor_name}</div>
-                                        <div className="text-xs text-[#64748B] mt-0.5">{appt.doctor_specialization}</div>
+                                        <div className="font-semibold text-[#F1F5F9]">{appt.doctorId?.userId?.firstName} {appt.doctorId?.userId?.lastName}</div>
+                                        <div className="text-xs text-[#64748B] mt-0.5">{appt.doctorId?.specialization}</div>
                                     </div>
                                     <StatusBadge status={appt.status} />
                                 </div>
                                 <div className="flex items-center gap-4 text-sm text-[#64748B] mb-4">
-                                    <span className="flex items-center gap-1.5"><Clock size={13} />{appt.date} at {appt.start_time}</span>
+                                    <span className="flex items-center gap-1.5"><Clock size={13} />{new Date(appt.startTime).toLocaleString()}</span>
                                 </div>
                                 {!canJoin && diff > 0 && (
                                     <div className="text-sm text-[#F59E0B] mb-3 flex items-center gap-2">
@@ -200,7 +204,7 @@ export default function VideoConsultation() {
                                     </div>
                                 )}
                                 <motion.button whileHover={canJoin ? { scale: 1.02 } : {}} whileTap={canJoin ? { scale: 0.97 } : {}}
-                                    onClick={() => canJoin && setActiveRoom(appt)}
+                                    onClick={() => canJoin && joinRoom(appt._id)}
                                     disabled={!canJoin}
                                     className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
                                     style={{
