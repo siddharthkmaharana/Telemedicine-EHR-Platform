@@ -39,28 +39,26 @@ const ConsultationRoom = () => {
     if (!notes) return;
     setSaving(true);
     try {
-      // In a real scenario, patientId would be fetched from the appointment details
-      // For now, we mock the patientId or pass it if it's available in context
-      const appointmentResponse = await apiClient.get('/appointments/doctor/me');
-      const appointment = appointmentResponse.data.find(a => a.id === appointmentId);
+      const appointmentResponse = await apiClient.get('/api/appointments');
+      const appointment = appointmentResponse.data.data.find(a => a._id === appointmentId);
       
+      if (!appointment) {
+        throw new Error('Appointment not found');
+      }
+
       const payload = {
         doctorId: user.userId,
+        patientId: appointment.patientId._id || appointment.patientId,
         appointmentId,
         clinicalNotes: notes,
         diagnoses: diagnoses
       };
       
-      // If we don't have the exact patientId from the mock API, we can skip saving for this demo
-      // In a fully integrated backend, we'd do POST /api/records
-      console.log('Saving notes payload:', payload);
+      await apiClient.post('/api/records', payload);
       
-      // Mock successful save
-      setTimeout(() => {
-        setSaving(false);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-      }, 800);
+      setSaving(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Failed to save notes:', err);
       setSaving(false);
