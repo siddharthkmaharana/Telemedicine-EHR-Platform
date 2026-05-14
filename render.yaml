@@ -1,0 +1,40 @@
+services:
+  # Backend API Server
+  - type: web
+    name: telemed-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AES_ENCRYPTION_KEY
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  # WebRTC Signaling Server
+  - type: web
+    name: telemed-signaling
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd signaling-server && npm install
+    startCommand: cd signaling-server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
