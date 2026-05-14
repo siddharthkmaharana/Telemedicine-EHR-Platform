@@ -1,5 +1,26 @@
 const Patient = require('../models/Patient');
 const AuditLog = require('../models/AuditLog');
+const User = require('../models/User');
+
+exports.getAllPatients = async (req, res) => {
+  try {
+    const patients = await Patient.find().populate({
+      path: 'userId',
+      select: 'firstName lastName email'
+    });
+    
+    // Format for frontend
+    const formatted = patients.map(p => ({
+      ...p._doc,
+      full_name: p.userId ? `${p.userId.firstName} ${p.userId.lastName}` : 'Unknown',
+      email: p.userId?.email || 'N/A'
+    }));
+
+    res.json({ success: true, data: formatted });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 exports.getPatientProfile = async (req, res) => {
   try {

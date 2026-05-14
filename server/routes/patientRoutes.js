@@ -5,6 +5,7 @@ const { auth } = require('../middleware/auth');
 const validateRequest = require('../middleware/validateRequest');
 const { updatePatientSchema } = require('../validations/medicalValidation');
 
+router.get('/', auth, patientController.getAllPatients);
 router.get('/:id', auth, patientController.getPatientProfile);
 router.put('/:id', auth, validateRequest(updatePatientSchema), patientController.updatePatientProfile);
 

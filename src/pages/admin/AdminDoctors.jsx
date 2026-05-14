@@ -16,7 +16,7 @@ export default function AdminDoctors() {
     const [newDoc, setNewDoc] = useState({ firstName: '', lastName: '', specialization: 'Cardiology', licenseId: '', consultationFee: 500, isActive: true, rating: 4.5, experienceYears: 5, email: '', password: 'Password123!' });
 
     useEffect(() => {
-        apiClient.get('/doctors').then(res => { setDoctors(res.data); setLoading(false); });
+        apiClient.get('/doctors').then(res => { setDoctors(res.data.data || []); setLoading(false); });
     }, []);
 
     const addDoctor = async () => {

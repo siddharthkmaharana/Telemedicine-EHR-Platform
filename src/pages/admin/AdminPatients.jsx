@@ -11,7 +11,7 @@ export default function AdminPatients() {
     const [selected, setSelected] = useState(null);
 
     useEffect(() => {
-        apiClient.get('/patients').then(res => { setPatients(res.data); setLoading(false); });
+        apiClient.get('/patients').then(res => { setPatients(res.data.data || []); setLoading(false); });
     }, []);
 
     const filtered = patients.filter(p => {

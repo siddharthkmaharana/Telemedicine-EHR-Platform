@@ -34,8 +34,8 @@ export default function WritePrescription() {
                     apiClient.get('/patients')
                 ]);
                 
-                const appts = apptsRes.data;
-                const pts = patientsRes.data;
+                const appts = apptsRes.data.data || [];
+                const pts = patientsRes.data.data || [];
 
                 setAppointments(appts);
                 setPatients(pts);
