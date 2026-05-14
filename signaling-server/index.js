@@ -13,6 +13,10 @@ const io = new Server(server, {
   }
 });
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'Signaling server is running' });
+});
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Middleware to authenticate socket connections
