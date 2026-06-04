@@ -1,13 +1,14 @@
 import React from 'react';
 
 const config = {
-    pending: { label: 'Pending', bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', dot: '#F59E0B' },
-    confirmed: { label: 'Confirmed', bg: 'rgba(0,217,184,0.15)', text: '#00D9B8', dot: '#00D9B8' },
-    completed: { label: 'Completed', bg: 'rgba(99,102,241,0.15)', text: '#818CF8', dot: '#818CF8' },
-    cancelled: { label: 'Cancelled', bg: 'rgba(239,68,68,0.15)', text: '#EF4444', dot: '#EF4444' },
-    active: { label: 'Active', bg: 'rgba(0,217,184,0.15)', text: '#00D9B8', dot: '#00D9B8' },
-    inactive: { label: 'Inactive', bg: 'rgba(100,116,139,0.15)', text: '#94A3B8', dot: '#94A3B8' },
-    expired: { label: 'Expired', bg: 'rgba(239,68,68,0.15)', text: '#EF4444', dot: '#EF4444' },
+    pending: { label: 'Pending', bg: 'rgba(245,158,11,0.2)', text: '#FFB83D', dot: '#FFB83D' },
+    approved: { label: 'Approved', bg: 'rgba(0,217,184,0.2)', text: '#00F5D0', dot: '#00F5D0' },
+    confirmed: { label: 'Confirmed', bg: 'rgba(0,217,184,0.2)', text: '#00F5D0', dot: '#00F5D0' },
+    completed: { label: 'Completed', bg: 'rgba(99,102,241,0.2)', text: '#A5B4FC', dot: '#A5B4FC' },
+    cancelled: { label: 'Cancelled', bg: 'rgba(239,68,68,0.2)', text: '#FF6B6B', dot: '#FF6B6B' },
+    active: { label: 'Active', bg: 'rgba(0,217,184,0.2)', text: '#00F5D0', dot: '#00F5D0' },
+    inactive: { label: 'Inactive', bg: 'rgba(100,116,139,0.2)', text: '#CBD5E1', dot: '#CBD5E1' },
+    expired: { label: 'Expired', bg: 'rgba(239,68,68,0.2)', text: '#FF6B6B', dot: '#FF6B6B' },
 };
 
 export default function StatusBadge({ status, size = 'sm' }) {

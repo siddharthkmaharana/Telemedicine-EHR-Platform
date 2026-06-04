@@ -75,7 +75,9 @@ export default function Sidebar({ navItems, accentColor = '#00D9B8', role = 'pat
                     {!collapsed && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="px-3 py-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                            <div className="text-xs font-medium text-[#F1F5F9] truncate">{currentUser?.name}</div>
+                            <div className="text-xs font-medium text-[#F1F5F9] truncate">
+                                {currentUser?.firstName} {currentUser?.lastName}
+                            </div>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <span className="text-xs px-1.5 py-0.5 rounded-md capitalize font-medium"
                                     style={{ background: rb.bg, color: rb.text }}>
@@ -103,7 +105,7 @@ export default function Sidebar({ navItems, accentColor = '#00D9B8', role = 'pat
                 className="absolute -right-3 top-8 w-6 h-6 rounded-full flex items-center justify-center z-50 transition-all hover:scale-110"
                 style={{ background: '#151D2E', border: '1px solid rgba(255,255,255,0.12)' }}
             >
-                {collapsed ? <ChevronRight size={12} color="#64748B" /> : <ChevronLeft size={12} color="#64748B" />}
+                {collapsed ? <ChevronRight size={12} color="#94A3B8" /> : <ChevronLeft size={12} color="#94A3B8" />}
             </button>
         </motion.div>
     );

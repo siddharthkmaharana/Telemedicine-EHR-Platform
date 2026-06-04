@@ -11,6 +11,29 @@ router.post(
   prescriptionController.createPrescription
 );
 
+// GET /api/prescriptions/doctor/me - Get all prescriptions for the current doctor
+router.get(
+  '/doctor/me',
+  authenticate,
+  authorize('doctor'),
+  prescriptionController.getDoctorPrescriptions
+);
+
+// GET /api/prescriptions/patient/me - Get all prescriptions for the current patient
+router.get(
+  '/patient/me',
+  authenticate,
+  authorize('patient'),
+  prescriptionController.getPatientPrescriptions
+);
+// GET /api/prescriptions - Get all prescriptions (Admin only)
+router.get(
+  '/',
+  authenticate,
+  authorize('admin'),
+  prescriptionController.getAllPrescriptions
+);
+
 // GET /api/prescriptions/:id/download - Download prescription PDF (Patient and Doctor)
 router.get(
   '/:id/download', 

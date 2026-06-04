@@ -64,7 +64,7 @@ function VideoRoom({ appointment, onLeave }) {
                                 style={{ background: 'rgba(124,58,237,0.2)', color: '#7C3AED' }}>
                                 {appointment.doctor_name?.charAt(3) || 'D'}
                             </div>
-                            <div className="text-[#64748B] text-sm">Waiting for {appointment.doctor_name} to join...</div>
+                            <div className="text-[#94A3B8] text-sm">Waiting for {appointment.doctor_name} to join...</div>
                             <div className="flex items-center justify-center gap-1.5 mt-3">
                                 <div className="w-2 h-2 rounded-full bg-[#F59E0B] animate-bounce" style={{ animationDelay: '0ms' }} />
                                 <div className="w-2 h-2 rounded-full bg-[#F59E0B] animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -81,7 +81,7 @@ function VideoRoom({ appointment, onLeave }) {
                         style={{ transform: 'scaleX(-1)' }} />
                     {cameraOff && (
                         <div className="absolute inset-0 flex items-center justify-center" style={{ background: '#0E1525' }}>
-                            <VideoOff size={24} color="#64748B" />
+                            <VideoOff size={24} color="#94A3B8" />
                         </div>
                     )}
                 </div>
@@ -112,7 +112,7 @@ function VideoRoom({ appointment, onLeave }) {
                                     }
                                 }}
                                 placeholder="Type a message..."
-                                className="flex-1 text-xs px-3 py-2 rounded-lg outline-none text-[#F1F5F9] placeholder-[#64748B]"
+                                className="flex-1 text-xs px-3 py-2 rounded-lg outline-none text-[#F1F5F9] placeholder-[#94A3B8]"
                                 style={{ background: 'rgba(255,255,255,0.08)' }} />
                         </div>
                     </motion.div>
@@ -168,20 +168,31 @@ export default function VideoConsultation() {
 
     return (
         <div className="space-y-6">
-            <h2 className="text-xl font-bold text-[#F1F5F9]">Video Consultations</h2>
+            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-6 bg-[#7C3AED] rounded-full"></div>
+                Video Consultations
+            </h2>
 
             {loading ? (
                 <div className="space-y-3">{[1, 2].map(i => <div key={i} className="card-surface h-28 shimmer" />)}</div>
             ) : appointments.length === 0 ? (
                 <div className="card-surface">
-                    <EmptyState icon={Video} title="No Video Appointments" message="Confirmed appointments will appear here with a join button" color="amber" />
+                    <EmptyState 
+                        icon={Video} 
+                        title="No Video Appointments" 
+                        message="Confirmed appointments will appear here with a join button" 
+                        color="amber" 
+                        action={null} 
+                        actionLabel="" 
+                    />
                 </div>
             ) : (
                 <div className="space-y-4 max-w-2xl">
                     {appointments.map((appt, i) => {
                         const startTime = new Date(appt.startTime);
-                        const diff = (startTime - now) / 60000;
-                        const canJoin = diff <= 10 && diff >= -60;
+                        // Fix: Use .getTime() to ensure correct numerical comparison across timezones
+                        const diff = Math.floor((startTime.getTime() - now.getTime()) / 60000);
+                        const canJoin = diff <= 15 && diff >= -60; // Allow joining 15 mins early
 
                         return (
                             <motion.div key={appt._id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
@@ -189,11 +200,11 @@ export default function VideoConsultation() {
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
                                         <div className="font-semibold text-[#F1F5F9]">{appt.doctorId?.userId?.firstName} {appt.doctorId?.userId?.lastName}</div>
-                                        <div className="text-xs text-[#64748B] mt-0.5">{appt.doctorId?.specialization}</div>
+                                        <div className="text-xs text-[#94A3B8] mt-0.5">{appt.doctorId?.specialization}</div>
                                     </div>
                                     <StatusBadge status={appt.status} />
                                 </div>
-                                <div className="flex items-center gap-4 text-sm text-[#64748B] mb-4">
+                                <div className="flex items-center gap-4 text-sm text-[#94A3B8] mb-4">
                                     <span className="flex items-center gap-1.5"><Clock size={13} />{new Date(appt.startTime).toLocaleString()}</span>
                                 </div>
                                 {!canJoin && diff > 0 && (
@@ -208,7 +219,7 @@ export default function VideoConsultation() {
                                     className="w-full py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all"
                                     style={{
                                         background: canJoin ? '#00D9B8' : 'rgba(255,255,255,0.05)',
-                                        color: canJoin ? '#070B14' : '#64748B',
+                                        color: canJoin ? '#070B14' : '#94A3B8',
                                         cursor: canJoin ? 'pointer' : 'not-allowed'
                                     }}>
                                     <Video size={16} />

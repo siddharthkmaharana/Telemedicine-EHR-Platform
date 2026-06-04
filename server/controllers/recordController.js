@@ -61,3 +61,16 @@ exports.updateRecord = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.getDoctorRecords = async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user.userId });
+    if (!doctor) return res.status(404).json({ message: 'Doctor profile not found' });
+
+    const records = await MedicalRecord.find({ doctorId: doctor._id }).sort({ createdAt: -1 });
+    res.json(records);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, User, Shield, Zap, Eye, EyeOff } from 'lucide-react';
+import { Stethoscope, User, Shield, Eye, EyeOff } from 'lucide-react';
 
 const ROLES = [
     { id: 'patient', label: 'Patient', icon: User, color: '#F59E0B', desc: 'Book appointments, view health records' },
@@ -9,16 +9,13 @@ const ROLES = [
     { id: 'admin', label: 'Admin', icon: Shield, color: '#00D9B8', desc: 'Platform overview and management' },
 ];
 
-const DEMO_ACCOUNTS = {
-    patient: { email: 'patient@medisync.com', password: 'Demo@123' },
-    doctor: { email: 'doctor@medisync.com', password: 'Demo@123' },
-    admin: { email: 'admin@medisync.com', password: 'Demo@123' },
-};
-
 export default function RoleSelect() {
     const [activeRole, setActiveRole] = useState('patient');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [isSignup, setIsSignup] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -32,8 +29,8 @@ export default function RoleSelect() {
             const response = await api.post('/auth/login', { email: emailVal, password: passwordVal });
             const { token, user } = response.data;
             
-            localStorage.setItem('token', token);
-            localStorage.setItem('medisync_user', JSON.stringify(user));
+            localStorage.setItem('medisync_user', JSON.stringify({ ...user, token }));
+            localStorage.setItem('token', token); // Keep for legacy if needed
             
             navigate(`/${user.role}`);
         } catch (err) {
@@ -43,21 +40,29 @@ export default function RoleSelect() {
         }
     };
 
+    const doSignup = async () => {
+        try {
+            const { default: api } = await import('@/lib/api');
+            await api.post('/auth/register', { 
+                email, password, role: activeRole, firstName, lastName 
+            });
+            await doLogin(email, password, activeRole);
+        } catch (err) {
+            console.error('Signup failed:', err);
+            setError(err.response?.data?.message || 'Signup failed');
+            setLoading(false);
+        }
+    };
+
     const handleLogin = (e) => {
         e?.preventDefault();
         setError('');
         setLoading(true);
-        setTimeout(() => doLogin(email, password, null), 700);
-    };
-
-    const handleDemoLogin = (role) => {
-        const demo = DEMO_ACCOUNTS[role];
-        setActiveRole(role);
-        setEmail(demo.email);
-        setPassword(demo.password);
-        setError('');
-        setLoading(true);
-        setTimeout(() => doLogin(demo.email, demo.password, role), 800);
+        if (isSignup) {
+            setTimeout(() => doSignup(), 700);
+        } else {
+            setTimeout(() => doLogin(email, password, null), 700);
+        }
     };
 
     return (
@@ -78,17 +83,17 @@ export default function RoleSelect() {
                 </div>
 
                 <div className="glass-elevated rounded-2xl p-8">
-                    <h2 className="text-lg font-semibold text-[#F1F5F9] text-center mb-1">Welcome back</h2>
-                    <p className="text-sm text-[#64748B] text-center mb-6">Sign in to your account</p>
+                    <h2 className="text-lg font-semibold text-[#F1F5F9] text-center mb-1">{isSignup ? 'Create Account' : 'Welcome back'}</h2>
+                    <p className="text-sm text-[#94A3B8] text-center mb-6">{isSignup ? 'Sign up for a new account' : 'Sign in to your account'}</p>
 
                     {/* Role tabs */}
                     <div className="flex gap-2 mb-6 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                         {ROLES.map(role => (
-                            <button key={role.id} onClick={() => setActiveRole(role.id)}
+                            <button key={role.id} onClick={() => { setActiveRole(role.id); if (role.id !== 'patient') setIsSignup(false); }}
                                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-medium transition-all duration-200"
                                 style={{
                                     background: activeRole === role.id ? role.color + '20' : 'transparent',
-                                    color: activeRole === role.id ? role.color : '#64748B',
+                                    color: activeRole === role.id ? role.color : '#94A3B8',
                                     border: activeRole === role.id ? `1px solid ${role.color}40` : '1px solid transparent',
                                 }}>
                                 <role.icon size={13} />
@@ -105,22 +110,40 @@ export default function RoleSelect() {
                     </div>
 
                     <form onSubmit={handleLogin} className="space-y-4">
+                        {isSignup && (
+                            <div className="flex gap-3">
+                                <div className="flex-1">
+                                    <label className="block text-xs font-medium text-[#94A3B8] uppercase tracking-wider mb-1.5">First Name</label>
+                                    <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
+                                        placeholder="John" required={isSignup}
+                                        className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
+                                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-xs font-medium text-[#94A3B8] uppercase tracking-wider mb-1.5">Last Name</label>
+                                    <input type="text" value={lastName} onChange={e => setLastName(e.target.value)}
+                                        placeholder="Doe" required={isSignup}
+                                        className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
+                                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                </div>
+                            </div>
+                        )}
                         <div>
-                            <label className="block text-xs font-medium text-[#64748B] uppercase tracking-wider mb-1.5">Email</label>
+                            <label className="block text-xs font-medium text-[#94A3B8] uppercase tracking-wider mb-1.5">Email</label>
                             <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                                 placeholder={`${activeRole}@medisync.com`}
-                                className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                                className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-[#64748B] uppercase tracking-wider mb-1.5">Password</label>
+                            <label className="block text-xs font-medium text-[#94A3B8] uppercase tracking-wider mb-1.5">Password</label>
                             <div className="relative">
                                 <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none pr-12"
+                                    className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none pr-12"
                                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#F1F5F9]">
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#F1F5F9]">
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
@@ -142,31 +165,23 @@ export default function RoleSelect() {
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
                                     <div className="w-4 h-4 border-2 border-[#070B14] border-t-transparent rounded-full animate-spin" />
-                                    Signing in...
+                                    {isSignup ? 'Signing up...' : 'Signing in...'}
                                 </span>
-                            ) : 'Sign In'}
+                            ) : (isSignup ? 'Sign Up' : 'Sign In')}
                         </motion.button>
+                        
+                        {activeRole === 'patient' && (
+                            <div className="text-center mt-4">
+                                <p className="text-sm text-[#94A3B8]">
+                                    {isSignup ? "Already have an account? " : "Don't have an account? "}
+                                    <button type="button" onClick={() => setIsSignup(!isSignup)} className="font-semibold hover:underline" style={{ color: roleConfig.color }}>
+                                        {isSignup ? 'Sign in' : 'Sign up'}
+                                    </button>
+                                </p>
+                            </div>
+                        )}
                     </form>
-
-                    {/* Demo quick login */}
-                    <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                        <div className="flex items-center gap-2 mb-3">
-                            <Zap size={13} color="#64748B" />
-                            <span className="text-xs text-[#64748B] font-medium uppercase tracking-wider">Quick Demo Login</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            {ROLES.map(role => (
-                                <motion.button key={role.id} onClick={() => handleDemoLogin(role.id)}
-                                    whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                                    className="py-2.5 rounded-xl text-xs font-semibold transition-all"
-                                    style={{ background: `${role.color}15`, color: role.color, border: `1px solid ${role.color}30` }}>
-                                    {role.label}
-                                </motion.button>
-                            ))}
-                        </div>
-                    </div>
                 </div>
-                <p className="text-center text-xs text-[#64748B] mt-4">Password for all demo accounts: <span className="text-[#F1F5F9]">Demo@123</span></p>
             </motion.div>
         </div>
     );

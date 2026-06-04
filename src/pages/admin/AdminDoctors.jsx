@@ -63,9 +63,9 @@ export default function AdminDoctors() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div className="relative">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search doctors..."
-                        className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none w-64"
+                        className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none w-64"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
                 <motion.button onClick={() => setShowAdd(true)} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -85,7 +85,7 @@ export default function AdminDoctors() {
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                 {['Doctor', 'Specialization', 'License', 'Rating', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#64748B]">{h}</th>
+                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#94A3B8]">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -105,8 +105,8 @@ export default function AdminDoctors() {
                                                 <span className="text-sm font-medium text-[#F1F5F9]">{name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{doc.specialization}</td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{doc.licenseId || 'N/A'}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{doc.specialization}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{doc.licenseId || 'N/A'}</td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-1">
                                                 <Star size={13} fill="#F59E0B" color="#F59E0B" />
@@ -146,7 +146,7 @@ export default function AdminDoctors() {
                             className="glass-elevated h-full w-full max-w-md p-6 overflow-y-auto" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-bold text-[#F1F5F9]">Add Doctor</h3>
-                                <button onClick={() => setShowAdd(false)}><X size={18} color="#64748B" /></button>
+                                <button onClick={() => setShowAdd(false)}><X size={18} color="#94A3B8" /></button>
                             </div>
                             <div className="space-y-4">
                                 {[
@@ -159,14 +159,14 @@ export default function AdminDoctors() {
                                     { label: 'Experience (Years)', key: 'experienceYears', type: 'number' }
                                 ].map(f => (
                                     <div key={f.key}>
-                                        <label className="text-xs text-[#64748B] mb-1.5 block">{f.label}</label>
+                                        <label className="text-xs text-[#94A3B8] mb-1.5 block">{f.label}</label>
                                         <input type={f.type} value={newDoc[f.key]} onChange={e => setNewDoc(d => ({ ...d, [f.key]: f.type === 'number' ? parseFloat(e.target.value) : e.target.value }))}
                                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                                     </div>
                                 ))}
                                 <div>
-                                    <label className="text-xs text-[#64748B] mb-1.5 block">Specialization</label>
+                                    <label className="text-xs text-[#94A3B8] mb-1.5 block">Specialization</label>
                                     <select value={newDoc.specialization} onChange={e => setNewDoc(d => ({ ...d, specialization: e.target.value }))}
                                         className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -190,18 +190,18 @@ export default function AdminDoctors() {
                     <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                         className="glass-elevated rounded-2xl p-6 w-full max-w-sm" onClick={e => e.stopPropagation()}>
                         <h3 className="text-base font-bold text-[#F1F5F9] mb-2">
-                            {confirmDeactivate.is_active !== false ? 'Deactivate' : 'Activate'} Doctor
+                            {confirmDeactivate.isActive !== false ? 'Deactivate' : 'Activate'} Doctor
                         </h3>
-                        <p className="text-sm text-[#64748B] mb-6">
-                            {confirmDeactivate.is_active !== false
-                                ? `${confirmDeactivate.full_name} will not be able to accept new appointments.`
-                                : `${confirmDeactivate.full_name} will be able to accept appointments again.`}
+                        <p className="text-sm text-[#94A3B8] mb-6">
+                            {confirmDeactivate.isActive !== false
+                                ? `${confirmDeactivate.userId?.firstName || 'This doctor'} will not be able to accept new appointments.`
+                                : `${confirmDeactivate.userId?.firstName || 'This doctor'} will be able to accept appointments again.`}
                         </p>
                         <div className="flex gap-3">
                             <button onClick={() => setConfirmDeactivate(null)} className="flex-1 py-2.5 rounded-xl text-sm font-medium"
                                 style={{ background: 'rgba(255,255,255,0.08)', color: '#F1F5F9' }}>Cancel</button>
                             <button onClick={() => toggleStatus(confirmDeactivate)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold"
-                                style={{ background: confirmDeactivate.is_active !== false ? '#EF4444' : '#00D9B8', color: confirmDeactivate.is_active !== false ? '#fff' : '#070B14' }}>
+                                style={{ background: confirmDeactivate.isActive !== false ? '#EF4444' : '#00D9B8', color: confirmDeactivate.isActive !== false ? '#fff' : '#070B14' }}>
                                 Confirm
                             </button>
                         </div>

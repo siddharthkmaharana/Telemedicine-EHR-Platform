@@ -52,7 +52,7 @@ export default function DoctorProfile() {
                 </div>
                 <div>
                     <div className="text-lg font-bold text-[#F1F5F9]">{doctor?.userId?.firstName} {doctor?.userId?.lastName}</div>
-                    <div className="text-sm text-[#64748B]">{doctor?.specialization}</div>
+                    <div className="text-sm text-[#94A3B8]">{doctor?.specialization}</div>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(0,217,184,0.15)', color: '#00D9B8' }}>
                             {doctor?.isActive ? 'Active' : 'Inactive'}
@@ -70,14 +70,14 @@ export default function DoctorProfile() {
                         { label: 'Consultation Fee (₹)', key: 'consultationFee', type: 'number' },
                     ].map(f => (
                         <div key={f.key}>
-                            <label className="text-xs text-[#64748B] mb-1.5 block">{f.label}</label>
+                            <label className="text-xs text-[#94A3B8] mb-1.5 block">{f.label}</label>
                             <input type={f.type} value={doctor?.[f.key] || ''} onChange={e => setDoctor(d => ({ ...d, [f.key]: f.type === 'number' ? parseFloat(e.target.value) : e.target.value }))}
                                 className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                         </div>
                     ))}
                     <div className="col-span-2">
-                        <label className="text-xs text-[#64748B] mb-1.5 block">Specialization</label>
+                        <label className="text-xs text-[#94A3B8] mb-1.5 block">Specialization</label>
                         <select value={doctor?.specialization || ''} onChange={e => setDoctor(d => ({ ...d, specialization: e.target.value }))}
                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -85,7 +85,7 @@ export default function DoctorProfile() {
                         </select>
                     </div>
                     <div className="col-span-2">
-                        <label className="text-xs text-[#64748B] mb-1.5 block">Bio</label>
+                        <label className="text-xs text-[#94A3B8] mb-1.5 block">Bio</label>
                         <textarea rows={3} value={doctor?.bio || ''} onChange={e => setDoctor(d => ({ ...d, bio: e.target.value }))}
                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none resize-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />

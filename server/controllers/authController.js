@@ -1,9 +1,11 @@
 const User = require('../models/User');
+const Doctor = require('../models/Doctor');
+const Patient = require('../models/Patient');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
-    const { email, password, role, firstName, lastName } = req.body;
+    const { email, password, role, firstName, lastName, specialization, licenseId, consultationFee, experienceYears } = req.body;
     
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -35,7 +37,17 @@ exports.register = async (req, res) => {
       { expiresIn: '8h' }
     );
 
-    res.status(201).json({ success: true, token });
+    res.status(201).json({ 
+      success: true, 
+      token,
+      user: {
+        _id: user._id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Star, ChevronLeft, Stethoscope } from 'lucide-react';
 import apiClient from '@/lib/api';
+import { useToast } from '@/components/ui/use-toast';
 import { format, addDays } from 'date-fns';
 
 const SPECIALIZATIONS = ['Cardiology', 'Dermatology', 'General', 'Neurology', 'Orthopedics', 'Pediatrics', 'Gynecology', 'Psychiatry', 'Ophthalmology', 'ENT'];
@@ -18,6 +19,7 @@ export default function BookAppointment() {
     const [loading, setLoading] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
     const [chiefComplaint, setChiefComplaint] = useState('');
+    const { toast } = useToast();
 
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
 
@@ -36,24 +38,43 @@ export default function BookAppointment() {
     useEffect(() => {
         if (selectedDoctor && selectedDate) {
             apiClient.get(`/appointments/doctor/${selectedDoctor._id}?date=${selectedDate}`)
-                .then(res => setBookedSlots(res.data.map(a => a.startTime)));
+                .then(res => {
+                    // Extract HH:mm from the ISO startTime string
+                    const booked = res.data.map(a => {
+                        const dateObj = new Date(a.startTime);
+                        return format(dateObj, 'HH:mm');
+                    });
+                    setBookedSlots(booked);
+                });
         }
     }, [selectedDoctor, selectedDate]);
 
     const handleConfirm = async () => {
         setLoading(true);
+        const start = new Date(`${selectedDate}T${selectedTime}:00`);
+        const end = new Date(start.getTime() + 30 * 60000); // Add 30 minutes
+
         try {
             await apiClient.post('/appointments', {
                 doctorId: selectedDoctor._id,
-                startTime: `${selectedDate}T${selectedTime}:00Z`, // Simplified UTC conversion
-                endTime: `${selectedDate}T${selectedTime.split(':')[0]}:${selectedTime.split(':')[1] === '00' ? '30' : '00'}:00Z`,
+                startTime: start.toISOString(),
+                endTime: end.toISOString(),
                 notes: chiefComplaint,
             });
             setLoading(false);
             setConfirmed(true);
+            toast({
+                title: "Appointment Booked!",
+                description: "Your appointment is now pending confirmation.",
+            });
         } catch (err) {
             console.error("Booking failed", err);
             setLoading(false);
+            toast({
+                variant: "destructive",
+                title: "Booking Failed",
+                description: err.response?.data?.message || "Something went wrong. Please try again.",
+            });
         }
     };
 
@@ -66,18 +87,18 @@ export default function BookAppointment() {
                     <CheckCircle size={40} color="#00D9B8" />
                 </div>
                 <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">Appointment Confirmed!</h2>
-                <p className="text-[#64748B] mb-6">Your appointment has been scheduled successfully</p>
+                <p className="text-[#94A3B8] mb-6">Your appointment has been scheduled successfully</p>
                 <div className="card-surface p-6 text-left w-full max-w-sm space-y-3">
                     <div className="flex justify-between text-sm">
-                        <span className="text-[#64748B]">Doctor</span>
-                        <span className="font-medium text-[#F1F5F9]">{selectedDoctor?.full_name}</span>
+                        <span className="text-[#94A3B8]">Doctor</span>
+                        <span className="font-medium text-[#F1F5F9]">Dr. {selectedDoctor?.userId?.firstName} {selectedDoctor?.userId?.lastName}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                        <span className="text-[#64748B]">Date</span>
+                        <span className="text-[#94A3B8]">Date</span>
                         <span className="font-medium text-[#F1F5F9]">{selectedDate}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                        <span className="text-[#64748B]">Time</span>
+                        <span className="text-[#94A3B8]">Time</span>
                         <span className="font-medium text-[#F1F5F9]">{selectedTime}</span>
                     </div>
                 </div>
@@ -96,7 +117,7 @@ export default function BookAppointment() {
             <div className="flex items-center gap-2 mb-8">
                 {[1, 2, 3, 4, 5].map(s => (
                     <React.Fragment key={s}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${s < step ? 'text-[#070B14]' : s === step ? 'text-[#070B14]' : 'text-[#64748B]'
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${s < step ? 'text-[#070B14]' : s === step ? 'text-[#070B14]' : 'text-[#94A3B8]'
                             }`} style={{ background: s <= step ? '#F59E0B' : 'rgba(255,255,255,0.08)' }}>
                             {s < step ? <CheckCircle size={14} /> : s}
                         </div>
@@ -109,7 +130,7 @@ export default function BookAppointment() {
                 {step === 1 && (
                     <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                         <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">Select Specialization</h2>
-                        <p className="text-sm text-[#64748B] mb-6">What type of doctor do you need?</p>
+                        <p className="text-sm text-[#94A3B8] mb-6">What type of doctor do you need?</p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {SPECIALIZATIONS.map(spec => (
                                 <button key={spec} onClick={() => { setSpecialization(spec); setStep(2); }}
@@ -129,30 +150,30 @@ export default function BookAppointment() {
 
                 {step === 2 && (
                     <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                        <button onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-[#64748B] mb-4 hover:text-[#F1F5F9]">
+                        <button onClick={() => setStep(1)} className="flex items-center gap-1 text-sm text-[#94A3B8] mb-4 hover:text-[#F1F5F9]">
                             <ChevronLeft size={16} /> Back
                         </button>
                         <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">Select Doctor</h2>
-                        <p className="text-sm text-[#64748B] mb-6">{specialization} specialists available</p>
+                        <p className="text-sm text-[#94A3B8] mb-6">{specialization} specialists available</p>
                         {doctors.length === 0 ? (
-                            <div className="card-surface p-8 text-center text-[#64748B]">No doctors found for this specialization. Seed data first.</div>
+                            <div className="card-surface p-8 text-center text-[#94A3B8]">No doctors found for this specialization. Seed data first.</div>
                         ) : (
                             <div className="space-y-3">
                                 {doctors.map(doc => (
-                                    <button key={doc.id} onClick={() => { setSelectedDoctor(doc); setStep(3); }}
+                                    <button key={doc._id} onClick={() => { setSelectedDoctor(doc); setStep(3); }}
                                         className="w-full card-surface p-5 flex items-center gap-4 text-left hover:border-[rgba(245,158,11,0.3)] transition-all">
                                         <div className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg"
                                             style={{ background: 'rgba(124,58,237,0.2)', color: '#7C3AED' }}>
-                                            {doc.full_name?.charAt(0) || 'D'}
+                                            {(doc.userId?.firstName || 'D').charAt(0)}
                                         </div>
                                         <div className="flex-1">
-                                            <div className="font-semibold text-[#F1F5F9]">{doc.full_name}</div>
-                                            <div className="text-xs text-[#64748B]">{doc.specialization} · {doc.experience_years || 5} years exp</div>
+                                            <div className="font-semibold text-[#F1F5F9]">Dr. {doc.userId?.firstName} {doc.userId?.lastName}</div>
+                                            <div className="text-xs text-[#94A3B8]">{doc.specialization} · {doc.experienceYears || 0} years exp</div>
                                             <div className="flex items-center gap-1 mt-1">
                                                 {Array.from({ length: 5 }, (_, i) => (
                                                     <Star key={i} size={11} fill={i < Math.floor(doc.rating || 4.5) ? '#F59E0B' : 'none'} color="#F59E0B" />
                                                 ))}
-                                                <span className="text-xs text-[#64748B] ml-1">{doc.rating || 4.5}</span>
+                                                <span className="text-xs text-[#94A3B8] ml-1">{doc.rating || 4.5}</span>
                                             </div>
                                         </div>
                                         {doc.available_today && (
@@ -169,7 +190,7 @@ export default function BookAppointment() {
 
                 {step === 3 && (
                     <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                        <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm text-[#64748B] mb-4 hover:text-[#F1F5F9]">
+                        <button onClick={() => setStep(2)} className="flex items-center gap-1 text-sm text-[#94A3B8] mb-4 hover:text-[#F1F5F9]">
                             <ChevronLeft size={16} /> Back
                         </button>
                         <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">Select Date</h2>
@@ -184,7 +205,7 @@ export default function BookAppointment() {
                                             border: `1px solid ${selectedDate === date ? '#F59E0B' : 'rgba(255,255,255,0.07)'}`,
                                             color: selectedDate === date ? '#F59E0B' : '#F1F5F9'
                                         }}>
-                                        <div className="text-xs text-[#64748B]">{format(d, 'EEE')}</div>
+                                        <div className="text-xs text-[#94A3B8]">{format(d, 'EEE')}</div>
                                         <div className="text-lg font-bold">{format(d, 'd')}</div>
                                         <div className="text-xs">{format(d, 'MMM')}</div>
                                     </button>
@@ -196,11 +217,11 @@ export default function BookAppointment() {
 
                 {step === 4 && (
                     <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                        <button onClick={() => setStep(3)} className="flex items-center gap-1 text-sm text-[#64748B] mb-4 hover:text-[#F1F5F9]">
+                        <button onClick={() => setStep(3)} className="flex items-center gap-1 text-sm text-[#94A3B8] mb-4 hover:text-[#F1F5F9]">
                             <ChevronLeft size={16} /> Back
                         </button>
                         <h2 className="text-xl font-bold text-[#F1F5F9] mb-2">Select Time</h2>
-                        <p className="text-sm text-[#64748B] mb-6">30-minute slots available on {selectedDate}</p>
+                        <p className="text-sm text-[#94A3B8] mb-6">30-minute slots available on {selectedDate}</p>
                         <div className="grid grid-cols-4 gap-2 mb-6">
                             {TIME_SLOTS.map(time => {
                                 const isBooked = bookedSlots.includes(time);
@@ -225,29 +246,29 @@ export default function BookAppointment() {
 
                 {step === 5 && (
                     <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                        <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-[#64748B] mb-4 hover:text-[#F1F5F9]">
+                        <button onClick={() => setStep(4)} className="flex items-center gap-1 text-sm text-[#94A3B8] mb-4 hover:text-[#F1F5F9]">
                             <ChevronLeft size={16} /> Back
                         </button>
                         <h2 className="text-xl font-bold text-[#F1F5F9] mb-6">Confirm Booking</h2>
                         <div className="card-surface p-6 space-y-4 mb-6">
                             {[
-                                { label: 'Doctor', value: selectedDoctor?.full_name },
+                                { label: 'Doctor', value: `Dr. ${selectedDoctor?.userId?.firstName} ${selectedDoctor?.userId?.lastName}` },
                                 { label: 'Specialization', value: specialization },
                                 { label: 'Date', value: selectedDate },
                                 { label: 'Time', value: selectedTime },
                                 { label: 'Duration', value: '30 minutes' },
                             ].map(item => (
                                 <div key={item.label} className="flex justify-between text-sm">
-                                    <span className="text-[#64748B]">{item.label}</span>
+                                    <span className="text-[#94A3B8]">{item.label}</span>
                                     <span className="font-medium text-[#F1F5F9]">{item.value}</span>
                                 </div>
                             ))}
                             <div className="pt-2">
-                                <label className="text-xs text-[#64748B] mb-2 block">Chief Complaint (optional)</label>
+                                <label className="text-xs text-[#94A3B8] mb-2 block">Chief Complaint (optional)</label>
                                 <textarea value={chiefComplaint} onChange={e => setChiefComplaint(e.target.value)}
                                     placeholder="Briefly describe your concern..."
                                     rows={3}
-                                    className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none resize-none"
+                                    className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none resize-none"
                                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                             </div>
                         </div>

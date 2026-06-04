@@ -11,11 +11,11 @@ export default function TopBar({ title, subtitle }) {
             style={{ marginLeft: 0 }}>
             <div>
                 <h1 className="text-xl font-bold text-[#F1F5F9]">{title}</h1>
-                {subtitle && <p className="text-xs text-[#64748B] mt-0.5">{subtitle}</p>}
+                {subtitle && <p className="text-xs text-[#94A3B8] mt-0.5">{subtitle}</p>}
             </div>
             <div className="flex items-center gap-3">
                 <button className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:bg-[rgba(255,255,255,0.08)]">
-                    <Bell size={16} color="#64748B" />
+                    <Bell size={16} color="#94A3B8" />
                 </button>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm"
                     style={{ background: 'linear-gradient(135deg, #00D9B8, #7C3AED)', color: '#fff' }}>

@@ -33,14 +33,14 @@ export default function DoctorSchedule() {
                 <div className="flex items-center gap-3">
                     <button onClick={() => setWeekStart(w => addDays(w, -7))}
                         className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[rgba(255,255,255,0.08)] transition-all">
-                        <ChevronLeft size={16} color="#64748B" />
+                        <ChevronLeft size={16} color="#94A3B8" />
                     </button>
                     <span className="text-sm font-medium text-[#F1F5F9]">
                         {format(weekStart, 'MMM d')} – {format(addDays(weekStart, 6), 'MMM d, yyyy')}
                     </span>
                     <button onClick={() => setWeekStart(w => addDays(w, 7))}
                         className="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-[rgba(255,255,255,0.08)] transition-all">
-                        <ChevronRight size={16} color="#64748B" />
+                        <ChevronRight size={16} color="#94A3B8" />
                     </button>
                 </div>
             </div>
@@ -49,10 +49,10 @@ export default function DoctorSchedule() {
                 <table className="w-full min-w-[700px]">
                     <thead>
                         <tr>
-                            <th className="text-xs text-[#64748B] font-medium text-left p-4 w-20">Time</th>
+                            <th className="text-xs text-[#94A3B8] font-medium text-left p-4 w-20">Time</th>
                             {weekDays.map(day => (
                                 <th key={format(day, 'yyyy-MM-dd')} className="text-xs font-medium p-4 text-center"
-                                    style={{ color: format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? '#7C3AED' : '#64748B' }}>
+                                    style={{ color: format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? '#7C3AED' : '#94A3B8' }}>
                                     <div className="text-[10px] uppercase tracking-wider">{format(day, 'EEE')}</div>
                                     <div className={`text-base font-bold mt-0.5 ${format(day, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd') ? 'text-[#7C3AED]' : 'text-[#F1F5F9]'}`}>
                                         {format(day, 'd')}
@@ -64,7 +64,7 @@ export default function DoctorSchedule() {
                     <tbody>
                         {TIME_SLOTS.map(time => (
                             <tr key={time} style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                                <td className="p-3 text-xs text-[#64748B]">{time}</td>
+                                <td className="p-3 text-xs text-[#94A3B8]">{time}</td>
                                 {weekDays.map(day => {
                                     const appt = getApptForSlot(day, time);
                                     return (
@@ -103,12 +103,12 @@ export default function DoctorSchedule() {
                                 { label: 'Chief Complaint', value: selectedAppt.notes || 'N/A' },
                             ].map(item => (
                                 <div key={item.label} className="flex justify-between">
-                                    <span className="text-[#64748B]">{item.label}</span>
+                                    <span className="text-[#94A3B8]">{item.label}</span>
                                     <span className="font-medium text-[#F1F5F9]">{item.value}</span>
                                 </div>
                             ))}
                             <div className="pt-2 flex justify-between items-center">
-                                <span className="text-[#64748B]">Status</span>
+                                <span className="text-[#94A3B8]">Status</span>
                                 <StatusBadge status={selectedAppt.status} />
                             </div>
                         </div>
