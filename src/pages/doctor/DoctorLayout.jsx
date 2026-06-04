@@ -19,7 +19,7 @@ export default function DoctorLayout() {
     if (!user) return null;
 
     return (
-        <DashboardLayout navItems={NAV_ITEMS} accentColor="#7C3AED" role="doctor" title={user.name} subtitle="Doctor Portal">
+        <DashboardLayout navItems={NAV_ITEMS} accentColor="#7C3AED" role="doctor" title={`Dr. ${user.firstName} ${user.lastName}`} subtitle="Doctor Portal">
             <Outlet />
         </DashboardLayout>
     );

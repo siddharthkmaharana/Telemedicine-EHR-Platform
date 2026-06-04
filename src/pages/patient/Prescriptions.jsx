@@ -47,14 +47,19 @@ export default function Prescriptions() {
             <h2 className="text-xl font-bold text-[#F1F5F9]">My Prescriptions</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {prescriptions.map((rx, i) => {
-                    const meds = rx.medications || [];
+                    let meds = [];
+                    try {
+                        meds = rx.medicationsData ? JSON.parse(rx.medicationsData) : [];
+                    } catch (e) {
+                        console.error("Failed to parse medicationsData", e);
+                    }
                     return (
                         <motion.div key={rx._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
                             className="card-surface p-6">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <div className="font-semibold text-[#F1F5F9]">{rx.diagnosisSummary || 'General Prescription'}</div>
-                                    <div className="text-xs text-[#64748B] mt-0.5">{rx.doctorId?.userId?.firstName} {rx.doctorId?.userId?.lastName} · {new Date(rx.createdAt).toLocaleDateString()}</div>
+                                    <div className="font-semibold text-[#F1F5F9]">{rx.diagnosisSummary || rx.instructions?.split('.')[0] || 'General Prescription'}</div>
+                                    <div className="text-xs text-[#94A3B8] mt-0.5">{rx.doctorId?.userId?.firstName} {rx.doctorId?.userId?.lastName} · {new Date(rx.createdAt).toLocaleDateString()}</div>
                                 </div>
                                 <StatusBadge status={rx.status || 'active'} />
                             </div>
@@ -65,11 +70,11 @@ export default function Prescriptions() {
                                         <div key={j} className="flex items-center gap-2 text-xs px-3 py-2 rounded-lg"
                                             style={{ background: 'rgba(255,255,255,0.04)' }}>
                                             <div className="w-2 h-2 rounded-full" style={{ background: '#F59E0B' }} />
-                                            <span className="font-medium text-[#F1F5F9]">{med.drugName}</span>
-                                            <span className="text-[#64748B]">{med.dosage} · {med.frequency}</span>
+                                            <span className="font-medium text-[#F1F5F9]">{med.name}</span>
+                                            <span className="text-[#94A3B8]">{med.dosage} · {med.frequency}</span>
                                         </div>
                                     ))}
-                                    {meds.length > 3 && <div className="text-xs text-[#64748B] px-3">+{meds.length - 3} more medications</div>}
+                                    {meds.length > 3 && <div className="text-xs text-[#94A3B8] px-3">+{meds.length - 3} more medications</div>}
                                 </div>
                             )}
 
@@ -105,7 +110,7 @@ export default function Prescriptions() {
                                 ))}
                             </div>
                         </div>
-                        <p className="text-xs text-[#64748B]">Rx ID: {qrModal._id?.slice(0, 12)}...</p>
+                        <p className="text-xs text-[#94A3B8]">Rx ID: {qrModal._id?.slice(0, 12)}...</p>
                         <button onClick={() => setQrModal(null)} className="mt-4 px-6 py-2.5 rounded-xl text-sm font-semibold"
                             style={{ background: 'rgba(255,255,255,0.08)', color: '#F1F5F9' }}>Close</button>
                     </motion.div>

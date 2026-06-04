@@ -49,7 +49,7 @@ export default function AdminSettings() {
 
     const Field = ({ label, field, type = 'text' }) => (
         <div>
-            <label className="text-xs text-[#64748B] mb-1.5 block">{label}</label>
+            <label className="text-xs text-[#94A3B8] mb-1.5 block">{label}</label>
             <input type={type} value={settings[field] || ''} onChange={e => setSettings(s => ({ ...s, [field]: type === 'number' ? parseInt(e.target.value) : e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                 style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
@@ -60,7 +60,7 @@ export default function AdminSettings() {
         <div className="flex items-center justify-between py-2">
             <div>
                 <div className="text-sm text-[#F1F5F9]">{label}</div>
-                {sublabel && <div className="text-xs text-[#64748B]">{sublabel}</div>}
+                {sublabel && <div className="text-xs text-[#94A3B8]">{sublabel}</div>}
             </div>
             <button onClick={() => setSettings(s => ({ ...s, [field]: !s[field] }))}
                 className="relative w-11 h-6 rounded-full transition-all"
@@ -107,7 +107,7 @@ export default function AdminSettings() {
                     <AlertTriangle size={16} color="#EF4444" />
                     <h3 className="text-sm font-semibold text-[#EF4444] uppercase tracking-wider">Danger Zone</h3>
                 </div>
-                <p className="text-xs text-[#64748B] mb-4">These actions are irreversible. Proceed with caution.</p>
+                <p className="text-xs text-[#94A3B8] mb-4">These actions are irreversible. Proceed with caution.</p>
                 <button className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
                     style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}
                     onClick={() => alert('Demo mode: Reset not available')}>

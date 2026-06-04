@@ -15,38 +15,65 @@ export default function DoctorPatients() {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
-                const [apptsRes, ptsRes, recsRes] = await Promise.all([
-                    apiClient.get('/appointments/doctor/me'),
-                    apiClient.get('/patients'),
-                    apiClient.get('/records/doctor/me'),
-                ]);
-                setAppointments(apptsRes.data);
-                setPatients(ptsRes.data);
-                setRecords(recsRes.data);
-                setLoading(false);
-            } catch (err) {
-                console.error("Failed to fetch patients dashboard", err);
-                setLoading(false);
+                // Fetch independently so one failure doesn't block the others
+                apiClient.get('/appointments/doctor/me').then(res => setAppointments(res.data)).catch(e => console.error("Appts failed", e));
+                apiClient.get('/patients').then(res => setPatients(res.data)).catch(e => console.error("Patients failed", e));
+                apiClient.get('/records/doctor/me').then(res => setRecords(res.data)).catch(e => console.error("Records failed", e));
+            } finally {
+                // Delay slightly to ensure state updates have started
+                setTimeout(() => setLoading(false), 800);
             }
         };
         fetchData();
     }, []);
 
-    // Unique patients by their ID
-    const patientMap = new Map();
-    appointments.forEach(a => {
-        if (a.patientId && !patientMap.has(a.patientId._id)) {
-            patientMap.set(a.patientId._id, a.patientId);
+    const uniquePatients = React.useMemo(() => {
+        const patientMap = new Map();
+        
+        // Strategy: Build a map using the most reliable ID possible
+        
+        // 1. Process global patients list first
+        if (patients && Array.isArray(patients)) {
+            patients.forEach(p => {
+                const id = p._id || p.id;
+                if (id) patientMap.set(id.toString(), p);
+            });
         }
-    });
-    const uniquePatients = Array.from(patientMap.values());
+        
+        // 2. Overlay patients from appointments (these are definitely real and current)
+        if (appointments && Array.isArray(appointments)) {
+            appointments.forEach(appt => {
+                const p = appt.patientId;
+                if (p) {
+                    const id = p._id || p.id || p; // Handle case where patientId is just an ID string
+                    const idStr = id.toString();
+                    
+                    if (typeof p === 'object' && p._id) {
+                        // We have the full object, use it to ensure we have name/email
+                        patientMap.set(idStr, p);
+                    } else if (!patientMap.has(idStr)) {
+                        // We only have the ID and no global object yet, create a placeholder
+                        patientMap.set(idStr, { _id: idStr, isPlaceholder: true });
+                    }
+                }
+            });
+        }
+        
+        return Array.from(patientMap.values());
+    }, [patients, appointments]);
 
     const filtered = uniquePatients.filter(p => {
-        const name = `${p.userId?.firstName || ''} ${p.userId?.lastName || ''}`;
-        const email = p.userId?.email || '';
-        return name.toLowerCase().includes(search.toLowerCase()) || 
-               email.toLowerCase().includes(search.toLowerCase());
+        if (!p) return false;
+        const user = p.userId || {};
+        const firstName = user.firstName || '';
+        const lastName = user.lastName || '';
+        const email = user.email || '';
+        const name = `${firstName} ${lastName}`.trim() || (p.isPlaceholder ? `Patient ID: ${p._id.slice(-6)}` : 'Anonymous Patient');
+        
+        const searchLower = search.toLowerCase();
+        return name.toLowerCase().includes(searchLower) || email.toLowerCase().includes(searchLower);
     });
 
     const getPatientRecords = (patientId) => records.filter(r => r.patientId === patientId || r.patientId?._id === patientId);
@@ -60,31 +87,31 @@ export default function DoctorPatients() {
         <div className="space-y-6">
             <div className="flex items-center gap-3">
                 <div className="relative flex-1 max-w-sm">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search patients..."
-                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
-                <span className="text-sm text-[#64748B]">{filtered.length} patients</span>
+                <span className="text-sm text-[#94A3B8]">{filtered.length} patients</span>
             </div>
 
             {loading ? (
                 <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="card-surface h-16 shimmer" />)}</div>
             ) : filtered.length === 0 ? (
-                <div className="card-surface"><EmptyState icon={User} title="No Patients Found" message="Patients from your appointments will appear here" color="violet" /></div>
+                <div className="card-surface"><EmptyState icon={User} title="No Patients Found" message="No registered patients found in the system." color="violet" action={null} actionLabel="" /></div>
             ) : (
                 <div className="card-surface overflow-hidden">
                     <table className="w-full">
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                 {['Patient', 'Email', 'Last Visit', 'Records', 'Actions'].map(h => (
-                                    <th key={h} className="text-left px-5 py-3.5 text-xs font-medium uppercase tracking-wider text-[#64748B]">{h}</th>
+                                    <th key={h} className="text-left px-5 py-3.5 text-xs font-medium uppercase tracking-wider text-[#94A3B8]">{h}</th>
                                 ))}
                             </tr>
                         </thead>
                         <tbody>
                             {filtered.map((p, i) => {
-                                const patientName = `${p.userId?.firstName || ''} ${p.userId?.lastName || ''}`;
+                                const name = `${p.userId?.firstName || ''} ${p.userId?.lastName || ''}`.trim() || (p.isPlaceholder ? `ID: ${p._id.slice(-6)}` : 'Anonymous');
                                 return (
                                     <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                                         style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
@@ -93,14 +120,14 @@ export default function DoctorPatients() {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs"
                                                     style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
-                                                    {patientName.charAt(0) || 'P'}
+                                                    {name.charAt(0) || 'P'}
                                                 </div>
-                                                <span className="text-sm font-medium text-[#F1F5F9]">{patientName}</span>
+                                                <span className="text-sm font-bold text-white">{name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{p.userId?.email}</td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{getLastVisit(p._id)}</td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{getPatientRecords(p._id).length}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{p.userId?.email}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{getLastVisit(p._id)}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{getPatientRecords(p._id).length}</td>
                                         <td className="px-5 py-4">
                                             <button onClick={() => setSelected(p)}
                                                 className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
@@ -126,7 +153,7 @@ export default function DoctorPatients() {
                             className="glass-elevated h-full w-full max-w-lg p-6 overflow-y-auto" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-6">
                                 <h3 className="text-lg font-bold text-[#F1F5F9]">Patient Detail</h3>
-                                <button onClick={() => setSelected(null)} className="text-[#64748B] hover:text-[#F1F5F9]"><X size={18} /></button>
+                                <button onClick={() => setSelected(null)} className="text-[#94A3B8] hover:text-[#F1F5F9]"><X size={18} /></button>
                             </div>
 
                             {/* Demographics */}
@@ -137,7 +164,7 @@ export default function DoctorPatients() {
                                 </div>
                                 <div>
                                     <div className="text-lg font-bold text-[#F1F5F9]">{`${selected.userId?.firstName || ''} ${selected.userId?.lastName || ''}`}</div>
-                                    <div className="text-sm text-[#64748B]">{selected.userId?.email}</div>
+                                    <div className="text-sm text-[#94A3B8]">{selected.userId?.email}</div>
                                 </div>
                             </div>
 
@@ -148,8 +175,8 @@ export default function DoctorPatients() {
                                 ].map(item => (
                                     <div key={item.label} className="flex items-center gap-3 p-3 rounded-xl"
                                         style={{ background: 'rgba(255,255,255,0.04)' }}>
-                                        <item.icon size={14} color="#64748B" />
-                                        <span className="text-xs text-[#64748B]">{item.label}:</span>
+                                        <item.icon size={14} color="#94A3B8" />
+                                        <span className="text-xs text-[#94A3B8]">{item.label}:</span>
                                         <span className="text-xs font-medium text-[#F1F5F9]">{item.value}</span>
                                     </div>
                                 ))}
@@ -161,15 +188,15 @@ export default function DoctorPatients() {
                                 {getPatientRecords(selected._id).map((rec, i) => (
                                     <div key={rec._id} className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <Clock size={12} color="#64748B" />
-                                            <span className="text-xs text-[#64748B]">{new Date(rec.createdAt).toLocaleDateString()}</span>
+                                            <Clock size={12} color="#94A3B8" />
+                                            <span className="text-xs text-[#94A3B8]">{new Date(rec.createdAt).toLocaleDateString()}</span>
                                         </div>
                                         <div className="text-sm font-medium text-[#F1F5F9]">{rec.diagnosis || 'General Visit'}</div>
-                                        {rec.notes && <div className="text-xs text-[#64748B] mt-1">{rec.notes}</div>}
+                                        {rec.notes && <div className="text-xs text-[#94A3B8] mt-1">{rec.notes}</div>}
                                     </div>
                                 ))}
                                 {getPatientRecords(selected._id).length === 0 && (
-                                    <div className="text-sm text-[#64748B] text-center py-4">No records available</div>
+                                    <div className="text-sm text-[#94A3B8] text-center py-4">No records available</div>
                                 )}
                             </div>
                         </motion.div>

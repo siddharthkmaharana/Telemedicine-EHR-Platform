@@ -18,17 +18,18 @@ export default function Consultations() {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
-                const [apptsRes, recsRes] = await Promise.all([
-                    apiClient.get('/appointments/doctor/me'),
-                    apiClient.get('/records/doctor/me'),
-                ]);
-                setAppointments(apptsRes.data.sort((a, b) => b.startTime?.localeCompare(a.startTime)));
-                setRecords(recsRes.data);
-                setLoading(false);
-            } catch (err) {
-                console.error("Failed to fetch consultations", err);
-                setLoading(false);
+                // Fetch independently so one failure doesn't block the others
+                apiClient.get('/appointments/doctor/me')
+                    .then(res => setAppointments(res.data.sort((a, b) => b.startTime?.localeCompare(a.startTime))))
+                    .catch(e => console.error("Consultations appts failed", e));
+                    
+                apiClient.get('/records/doctor/me')
+                    .then(res => setRecords(res.data))
+                    .catch(e => console.error("Consultations records failed", e));
+            } finally {
+                setTimeout(() => setLoading(false), 800);
             }
         };
         fetchData();
@@ -45,11 +46,15 @@ export default function Consultations() {
 
     return (
         <div className="space-y-6">
+            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <div className="w-1.5 h-6 bg-[#00D9B8] rounded-full"></div>
+                Consultations
+            </h2>
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 min-w-48">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search patient..."
-                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
                 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
@@ -66,7 +71,16 @@ export default function Consultations() {
             {loading ? (
                 <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="card-surface h-16 shimmer" />)}</div>
             ) : filtered.length === 0 ? (
-                <div className="card-surface"><EmptyState icon={FileText} title="No Consultations" message="Your consultation history will appear here" color="violet" /></div>
+                <div className="card-surface">
+                    <EmptyState 
+                        icon={FileText} 
+                        title="No Consultations" 
+                        message="Your consultation history will appear here" 
+                        color="violet" 
+                        action={null} 
+                        actionLabel="" 
+                    />
+                </div>
             ) : (
                 <div className="space-y-2">
                     {filtered.map((appt, i) => {
@@ -83,10 +97,10 @@ export default function Consultations() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-medium text-[#F1F5F9]">{patientName}</div>
-                                        <div className="text-xs text-[#64748B]">{new Date(appt.startTime).toLocaleString()}</div>
+                                        <div className="text-xs text-[#94A3B8]">{new Date(appt.startTime).toLocaleString()}</div>
                                     </div>
                                     <StatusBadge status={appt.status} />
-                                    <ChevronDown size={15} color="#64748B" className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                    <ChevronDown size={15} color="#94A3B8" className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                                 </div>
 
                                 <AnimatePresence>
@@ -97,23 +111,35 @@ export default function Consultations() {
                                                 {record ? (
                                                     <>
                                                         <div className="text-xs">
-                                                            <span className="text-[#64748B]">Diagnosis: </span>
+                                                            <span className="text-[#94A3B8]">Diagnosis: </span>
                                                             <span className="text-[#F1F5F9]">{record.diagnosis || 'N/A'}</span>
                                                         </div>
                                                         <div className="text-xs">
-                                                            <span className="text-[#64748B]">Notes: </span>
+                                                            <span className="text-[#94A3B8]">Notes: </span>
                                                             <span className="text-[#F1F5F9]">{record.notes || 'No notes added'}</span>
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <div className="text-xs text-[#64748B]">No medical record linked yet</div>
+                                                    <div className="text-xs text-[#94A3B8]">No medical record linked yet</div>
                                                 )}
                                                 <div className="flex gap-2 pt-2">
-                                                    <button onClick={() => navigate(`/doctor/prescribe?patient=${appt.patientId?.userId?._id}&appt=${appt._id}`)}
+                                                    <button onClick={() => navigate(`/doctor/prescribe?patientId=${appt.patientId?._id}&apptId=${appt._id}`)}
                                                         className="text-xs px-3 py-2 rounded-lg font-medium"
                                                         style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
                                                         Write Prescription
                                                     </button>
+                                                    {(appt.status === 'approved' || appt.status === 'confirmed') && (
+                                                        <button onClick={() => {
+                                                            if(window.confirm('Are you sure you want to cancel this appointment?')) {
+                                                                apiClient.put(`/appointments/${appt._id}/status`, { status: 'cancelled' })
+                                                                    .then(() => setAppointments(prev => prev.map(a => a._id === appt._id ? { ...a, status: 'cancelled' } : a)));
+                                                            }
+                                                        }}
+                                                            className="text-xs px-3 py-2 rounded-lg font-medium"
+                                                            style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
+                                                            Cancel Appointment
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </motion.div>

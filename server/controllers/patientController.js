@@ -30,7 +30,7 @@ exports.getPatientProfile = async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized access" });
     }
 
-    const patient = await Patient.findById(id);
+    const patient = await Patient.findById(id).populate('userId', 'firstName lastName email role');
     if (!patient) return res.status(404).json({ success: false, message: "Patient not found" });
 
     await AuditLog.create({

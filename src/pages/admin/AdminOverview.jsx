@@ -29,21 +29,29 @@ export default function AdminOverview() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [ptsRes, docsRes, apptsRes, rxsRes, logsRes] = await Promise.all([
-                    apiClient.get('/patients'),
-                    apiClient.get('/doctors'),
-                    apiClient.get('/appointments'),
-                    apiClient.get('/prescriptions'),
-                    apiClient.get('/audit'),
-                ]);
-                setPatients(ptsRes.data);
-                setDoctors(docsRes.data);
-                setAppointments(apptsRes.data);
-                setPrescriptions(rxsRes.data);
-                setAuditLogs(logsRes.data);
+                apiClient.get('/patients')
+                    .then(res => setPatients(res.data))
+                    .catch(e => console.error("Admin pts failed", e));
+                    
+                apiClient.get('/doctors')
+                    .then(res => setDoctors(res.data))
+                    .catch(e => console.error("Admin docs failed", e));
+                    
+                apiClient.get('/appointments')
+                    .then(res => setAppointments(res.data))
+                    .catch(e => console.error("Admin appts failed", e));
+                    
+                apiClient.get('/prescriptions')
+                    .then(res => setPrescriptions(res.data))
+                    .catch(e => console.error("Admin rxs failed", e));
+                    
+                apiClient.get('/audit')
+                    .then(res => setAuditLogs(res.data))
+                    .catch(e => console.error("Admin audit failed", e));
+
                 setLoading(false);
             } catch (err) {
-                console.error("Failed to fetch admin dashboard", err);
+                console.error("Admin dashboard fetch error", err);
                 setLoading(false);
             }
         };
@@ -91,9 +99,9 @@ export default function AdminOverview() {
                     <ResponsiveContainer width="100%" height={220}>
                         <LineChart data={lineData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false}
+                            <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94A3B8' }} tickLine={false}
                                 interval={Math.floor(lineData.length / 6)} />
-                            <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false} />
+                            <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} tickLine={false} axisLine={false} />
                             <Tooltip content={<CustomTooltip />} />
                             <Line type="monotone" dataKey="count" stroke="#00D9B8" strokeWidth={2} dot={false} name="Appointments" />
                         </LineChart>
@@ -104,7 +112,7 @@ export default function AdminOverview() {
                 <div className="card-surface p-6">
                     <h3 className="text-sm font-semibold text-[#F1F5F9] mb-5">Appointments by Specialization</h3>
                     {pieData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-[#64748B] text-sm">No data available</div>
+                        <div className="flex items-center justify-center h-48 text-[#94A3B8] text-sm">No data available</div>
                     ) : (
                         <div className="flex items-center gap-6">
                             <ResponsiveContainer width="50%" height={180}>
@@ -119,7 +127,7 @@ export default function AdminOverview() {
                                 {pieData.map((item, i) => (
                                     <div key={item.name} className="flex items-center gap-2 text-xs">
                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
-                                        <span className="text-[#64748B] truncate max-w-24">{item.name}</span>
+                                        <span className="text-[#94A3B8] truncate max-w-24">{item.name}</span>
                                         <span className="font-medium text-[#F1F5F9] ml-auto">{item.value}</span>
                                     </div>
                                 ))}
@@ -136,8 +144,8 @@ export default function AdminOverview() {
                     <ResponsiveContainer width="100%" height={200}>
                         <BarChart data={barData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                            <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} />
-                            <YAxis tick={{ fontSize: 11, fill: '#64748B' }} tickLine={false} axisLine={false} />
+                            <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94A3B8' }} tickLine={false} />
+                            <YAxis tick={{ fontSize: 11, fill: '#94A3B8' }} tickLine={false} axisLine={false} />
                             <Tooltip content={<CustomTooltip />} />
                             <Bar dataKey="patients" fill="#7C3AED" radius={[4, 4, 0, 0]} name="Patients" />
                         </BarChart>
@@ -147,7 +155,7 @@ export default function AdminOverview() {
                 <div className="card-surface p-6">
                     <h3 className="text-sm font-semibold text-[#F1F5F9] mb-4">Recent Activity</h3>
                     {auditLogs.length === 0 ? (
-                        <div className="text-sm text-[#64748B] text-center py-8">No audit events yet</div>
+                        <div className="text-sm text-[#94A3B8] text-center py-8">No audit events yet</div>
                     ) : (
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                             {auditLogs.map((log, i) => (
@@ -158,9 +166,9 @@ export default function AdminOverview() {
                                         style={{ background: log.action === 'READ' ? '#00D9B8' : log.action === 'WRITE' ? '#7C3AED' : '#EF4444' }} />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs text-[#F1F5F9] truncate">{log.description || `${log.action} ${log.resourceType}`}</div>
-                                        <div className="text-xs text-[#64748B]">{log.userId?.email} · {log.userId?.role}</div>
+                                        <div className="text-xs text-[#94A3B8]">{log.userId?.email} · {log.userId?.role}</div>
                                     </div>
-                                    <div className="text-xs" style={{ color: log.isPhi ? '#F59E0B' : '#64748B' }}>
+                                    <div className="text-xs" style={{ color: log.isPhi ? '#F59E0B' : '#94A3B8' }}>
                                         {log.isPhi ? '🔒 PHI' : log.action}
                                     </div>
                                 </motion.div>

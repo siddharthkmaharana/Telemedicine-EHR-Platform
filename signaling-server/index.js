@@ -64,7 +64,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.SIGNALING_PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Signaling server running on port ${PORT}`);
 });

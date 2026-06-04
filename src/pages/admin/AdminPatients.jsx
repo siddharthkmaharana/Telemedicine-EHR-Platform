@@ -34,9 +34,9 @@ export default function AdminPatients() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div className="relative">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search patients..."
-                        className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none w-64"
+                        className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none w-64"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
                 <motion.button onClick={exportCSV} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
@@ -56,7 +56,7 @@ export default function AdminPatients() {
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                 {['Patient', 'Email', 'Blood Group', 'Allergies', 'Actions'].map(h => (
-                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#64748B]">{h}</th>
+                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#94A3B8]">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -76,13 +76,13 @@ export default function AdminPatients() {
                                                 <span className="text-sm font-medium text-[#F1F5F9]">{name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{p.userId?.email}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{p.userId?.email}</td>
                                         <td className="px-5 py-4 text-sm">
                                             <span className="px-2 py-0.5 rounded-md text-xs font-medium" style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
                                                 {p.bloodGroup || 'N/A'}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{(p.allergies || []).join(', ') || 'None'}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{(p.allergies || []).join(', ') || 'None'}</td>
                                         <td className="px-5 py-4">
                                             <button onClick={() => setSelected(p)}
                                                 className="text-xs px-3 py-1.5 rounded-lg font-medium"
@@ -107,7 +107,7 @@ export default function AdminPatients() {
                             className="glass-elevated h-full w-full max-w-md p-6 overflow-y-auto" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-5">
                                 <h3 className="text-lg font-bold text-[#F1F5F9]">Patient Record</h3>
-                                <button onClick={() => setSelected(null)}><X size={18} color="#64748B" /></button>
+                                <button onClick={() => setSelected(null)}><X size={18} color="#94A3B8" /></button>
                             </div>
                             <div className="flex items-center gap-4 p-4 rounded-xl mb-5" style={{ background: 'rgba(0,217,184,0.08)' }}>
                                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-2xl"
@@ -116,18 +116,18 @@ export default function AdminPatients() {
                                 </div>
                                 <div>
                                     <div className="text-base font-bold text-[#F1F5F9]">{`${selected.userId?.firstName || ''} ${selected.userId?.lastName || ''}`}</div>
-                                    <div className="text-sm text-[#64748B]">{selected.userId?.email}</div>
+                                    <div className="text-sm text-[#94A3B8]">{selected.userId?.email}</div>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                                     <Heart size={14} color="#EF4444" />
-                                    <span className="text-xs text-[#64748B]">Blood Group</span>
+                                    <span className="text-xs text-[#94A3B8]">Blood Group</span>
                                     <span className="text-xs font-medium text-[#F1F5F9] ml-auto">{selected.bloodGroup || 'N/A'}</span>
                                 </div>
                                 <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
                                     <AlertTriangle size={14} color="#F59E0B" />
-                                    <span className="text-xs text-[#64748B]">Allergies</span>
+                                    <span className="text-xs text-[#94A3B8]">Allergies</span>
                                     <span className="text-xs font-medium text-[#F1F5F9] ml-auto">{(selected.allergies || []).join(', ') || 'None'}</span>
                                 </div>
                                 {[
@@ -136,7 +136,7 @@ export default function AdminPatients() {
                                     { label: 'Address', value: selected.address || 'N/A' },
                                 ].map(item => (
                                     <div key={item.label} className="flex justify-between p-3 rounded-xl text-sm" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                                        <span className="text-[#64748B]">{item.label}</span>
+                                        <span className="text-[#94A3B8]">{item.label}</span>
                                         <span className="font-medium text-[#F1F5F9]">{item.value}</span>
                                     </div>
                                 ))}

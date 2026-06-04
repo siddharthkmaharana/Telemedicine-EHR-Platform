@@ -48,9 +48,9 @@ export default function AuditLogs() {
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
                     <div className="relative">
-                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search logs..."
-                            className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none w-52"
+                            className="pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none w-52"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                     </div>
                     <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
@@ -90,7 +90,7 @@ export default function AuditLogs() {
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                 {['Timestamp', 'User', 'Role', 'Action', 'Resource', 'Description', 'IP'].map(h => (
-                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#64748B]">{h}</th>
+                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#94A3B8]">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -104,7 +104,7 @@ export default function AuditLogs() {
                                     <motion.tr key={log._id || log.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: Math.min(i * 0.02, 0.5) }}
                                         style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: log.isPhi || log.is_phi ? 'rgba(245,158,11,0.04)' : 'transparent' }}
                                         className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
-                                        <td className="px-5 py-3.5 text-xs text-[#64748B] font-mono whitespace-nowrap">
+                                        <td className="px-5 py-3.5 text-xs text-[#94A3B8] font-mono whitespace-nowrap">
                                             {timestamp ? new Date(timestamp).toLocaleString() : '—'}
                                         </td>
                                         <td className="px-5 py-3.5">
@@ -123,9 +123,9 @@ export default function AuditLogs() {
                                         <td className="px-5 py-3.5">
                                             <span className="text-xs px-2 py-1 rounded-md font-semibold" style={{ background: ac.bg, color: ac.text }}>{log.action}</span>
                                         </td>
-                                        <td className="px-5 py-3.5 text-xs text-[#64748B]">{log.resourceType || log.resource_type}</td>
-                                        <td className="px-5 py-3.5 text-xs text-[#64748B] max-w-xs truncate">{log.description || '—'}</td>
-                                        <td className="px-5 py-3.5 text-xs text-[#64748B] font-mono">{log.ipAddress || log.ip_address || '127.0.0.1'}</td>
+                                        <td className="px-5 py-3.5 text-xs text-[#94A3B8]">{log.resourceType || log.resource_type}</td>
+                                        <td className="px-5 py-3.5 text-xs text-[#94A3B8] max-w-xs truncate">{log.description || '—'}</td>
+                                        <td className="px-5 py-3.5 text-xs text-[#94A3B8] font-mono">{log.ipAddress || log.ip_address || '127.0.0.1'}</td>
                                     </motion.tr>
                                 );
                             })}

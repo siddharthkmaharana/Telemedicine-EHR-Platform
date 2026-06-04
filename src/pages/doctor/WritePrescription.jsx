@@ -6,7 +6,7 @@ import apiClient from '@/lib/api';
 const FREQ_OPTIONS = ['Once daily', 'Twice daily', 'Three times daily', 'Four times daily', 'As needed', 'Weekly'];
 const DURATION_OPTIONS = ['3 days', '5 days', '7 days', '10 days', '14 days', '21 days', '30 days', 'Ongoing'];
 
-const emptyMed = () => ({ drug_name: '', dosage: '', frequency: 'Once daily', duration: '7 days', notes: '' });
+const emptyMed = () => ({ name: '', dosage: '', frequency: 'Once daily', duration: '7 days', notes: '' });
 
 export default function WritePrescription() {
     const [patients, setPatients] = useState([]);
@@ -21,11 +21,12 @@ export default function WritePrescription() {
     const [saved, setSaved] = useState(false);
     const [lastPrescriptionId, setLastPrescriptionId] = useState(null);
     const user = JSON.parse(localStorage.getItem('medisync_user') || '{}');
+    const doctorFullName = user.firstName ? `${user.firstName} ${user.lastName}` : 'Doctor';
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        const patientId = params.get('patientId');
-        const apptId = params.get('apptId');
+        const patientId = params.get('patientId') || params.get('patient');
+        const apptId = params.get('apptId') || params.get('appt');
 
         const fetchData = async () => {
             try {
@@ -44,7 +45,8 @@ export default function WritePrescription() {
                     const pt = pts.find(p => p._id === patientId);
                     if (pt) { 
                         setSelectedPatient(pt); 
-                        setPatientSearch(pt.full_name || pt.email); 
+                        const name = pt.userId ? `${pt.userId.firstName} ${pt.userId.lastName}` : (pt.full_name || pt.email);
+                        setPatientSearch(name); 
                     }
                 }
                 if (apptId) setSelectedAppt(apptId);
@@ -61,14 +63,14 @@ export default function WritePrescription() {
     const updateMed = (i, key, val) => setMedications(m => m.map((med, idx) => idx === i ? { ...med, [key]: val } : med));
 
     const handleSave = async () => {
-        if (!selectedPatient || !diagnosis || medications.every(m => !m.drug_name)) return;
+        if (!selectedPatient || medications.every(m => !m.name)) return;
         setSaving(true);
         try {
             const response = await apiClient.post('/prescriptions', {
                 patientId: selectedPatient._id,
-                appointmentId: selectedAppt,
-                medicationsData: JSON.stringify(medications.filter(m => m.drug_name)),
-                instructions: `${diagnosis}. ${instructions}`
+                appointmentId: selectedAppt || undefined,
+                medicationsData: JSON.stringify(medications.filter(m => m.name)),
+                instructions: `${diagnosis}${instructions ? '. ' + instructions : ''}`
             });
             
             setLastPrescriptionId(response.data.prescriptionId);
@@ -78,13 +80,14 @@ export default function WritePrescription() {
         } catch (err) {
             console.error("Failed to save prescription", err);
             setSaving(false);
+            alert("Failed to save prescription: " + (err.response?.data?.message || err.message));
         }
     };
 
     const downloadPDF = async () => {
         if (!lastPrescriptionId) return;
         try {
-            const response = await apiClient.get(`/prescriptions/download/${lastPrescriptionId}`, {
+            const response = await apiClient.get(`/prescriptions/${lastPrescriptionId}/download`, {
                 responseType: 'blob'
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -99,7 +102,10 @@ export default function WritePrescription() {
         }
     };
 
-    const filteredAppts = appointments.filter(a => !selectedPatient || a.patient_email === selectedPatient.patient_email);
+    const filteredAppts = appointments.filter(a => {
+        if (!selectedPatient) return true;
+        return a.patientId?._id === selectedPatient._id;
+    });
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -109,22 +115,31 @@ export default function WritePrescription() {
 
                 {/* Patient selector */}
                 <div>
-                    <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">Patient</label>
+                    <label className="text-xs text-[#94A3B8] uppercase tracking-wider mb-1.5 block">Patient</label>
                     <div className="relative">
                         <input value={patientSearch} onChange={e => { setPatientSearch(e.target.value); setSelectedPatient(null); }}
                             placeholder="Search patient by name..."
-                            className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                            className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                         {patientSearch && !selectedPatient && (
                             <div className="absolute top-full mt-1 w-full rounded-xl overflow-hidden z-10"
                                 style={{ background: '#151D2E', border: '1px solid rgba(255,255,255,0.1)' }}>
-                                {appointments.filter(a => a.patient_name?.toLowerCase().includes(patientSearch.toLowerCase()))
-                                    .map(a => (
-                                        <button key={a.patient_email} onClick={() => { setSelectedPatient(a); setPatientSearch(a.patient_name); }}
-                                            className="w-full px-4 py-3 text-left text-sm text-[#F1F5F9] hover:bg-[rgba(255,255,255,0.06)]">
-                                            {a.patient_name} <span className="text-[#64748B] text-xs">({a.patient_email})</span>
-                                        </button>
-                                    ))}
+                                {patients
+                                    .filter(p => {
+                                        const name = p.userId ? `${p.userId.firstName} ${p.userId.lastName}` : (p.full_name || '');
+                                        return name.toLowerCase().includes(patientSearch.toLowerCase());
+                                    })
+                                    .slice(0, 5)
+                                    .map(p => {
+                                        const name = p.userId ? `${p.userId.firstName} ${p.userId.lastName}` : (p.full_name || 'Unknown');
+                                        const email = p.userId?.email || p.email;
+                                        return (
+                                            <button key={p._id} onClick={() => { setSelectedPatient(p); setPatientSearch(name); }}
+                                                className="w-full px-4 py-3 text-left text-sm text-[#F1F5F9] hover:bg-[rgba(255,255,255,0.06)]">
+                                                {name} <span className="text-[#94A3B8] text-xs">({email})</span>
+                                            </button>
+                                        );
+                                    })}
                             </div>
                         )}
                     </div>
@@ -132,30 +147,33 @@ export default function WritePrescription() {
 
                 {/* Appointment */}
                 <div>
-                    <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">Linked Appointment</label>
+                    <label className="text-xs text-[#94A3B8] uppercase tracking-wider mb-1.5 block">Linked Appointment</label>
                     <select value={selectedAppt} onChange={e => setSelectedAppt(e.target.value)}
                         className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] outline-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
                         <option value="">Select appointment</option>
-                        {filteredAppts.map(a => (
-                            <option key={a.id} value={a.id}>{a.patient_name} — {a.date} at {a.start_time}</option>
-                        ))}
+                        {filteredAppts.map(a => {
+                            const name = `${a.patientId?.userId?.firstName} ${a.patientId?.userId?.lastName}`;
+                            return (
+                                <option key={a._id} value={a._id}>{name} — {new Date(a.startTime).toLocaleDateString()} at {new Date(a.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</option>
+                            );
+                        })}
                     </select>
                 </div>
 
                 {/* Diagnosis */}
                 <div>
-                    <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">Diagnosis Summary</label>
+                    <label className="text-xs text-[#94A3B8] uppercase tracking-wider mb-1.5 block">Diagnosis Summary</label>
                     <textarea value={diagnosis} onChange={e => setDiagnosis(e.target.value)} rows={2}
                         placeholder="Brief diagnosis summary..."
-                        className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none resize-none"
+                        className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none resize-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
 
                 {/* Medications */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
-                        <label className="text-xs text-[#64748B] uppercase tracking-wider">Medications</label>
+                        <label className="text-xs text-[#94A3B8] uppercase tracking-wider">Medications</label>
                         <button onClick={addMed} className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg"
                             style={{ background: 'rgba(124,58,237,0.15)', color: '#7C3AED' }}>
                             <Plus size={12} /> Add
@@ -165,15 +183,15 @@ export default function WritePrescription() {
                         {medications.map((med, i) => (
                             <div key={i} className="p-4 rounded-xl space-y-3" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                                 <div className="flex justify-between">
-                                    <span className="text-xs text-[#64748B]">Medication {i + 1}</span>
+                                    <span className="text-xs text-[#94A3B8]">Medication {i + 1}</span>
                                     {i > 0 && <button onClick={() => removeMed(i)}><Trash2 size={13} color="#EF4444" /></button>}
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <input value={med.drug_name} onChange={e => updateMed(i, 'drug_name', e.target.value)} placeholder="Drug name"
-                                        className="col-span-2 px-3 py-2 rounded-lg text-xs text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                                    <input value={med.name} onChange={e => updateMed(i, 'name', e.target.value)} placeholder="Drug name"
+                                        className="col-span-2 px-3 py-2 rounded-lg text-xs text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }} />
                                     <input value={med.dosage} onChange={e => updateMed(i, 'dosage', e.target.value)} placeholder="Dosage (e.g., 500mg)"
-                                        className="px-3 py-2 rounded-lg text-xs text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                                        className="px-3 py-2 rounded-lg text-xs text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }} />
                                     <select value={med.frequency} onChange={e => updateMed(i, 'frequency', e.target.value)}
                                         className="px-3 py-2 rounded-lg text-xs text-[#F1F5F9] outline-none"
@@ -186,7 +204,7 @@ export default function WritePrescription() {
                                         {DURATION_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
                                     </select>
                                     <input value={med.notes} onChange={e => updateMed(i, 'notes', e.target.value)} placeholder="Additional notes"
-                                        className="px-3 py-2 rounded-lg text-xs text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                                        className="px-3 py-2 rounded-lg text-xs text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }} />
                                 </div>
                             </div>
@@ -196,15 +214,15 @@ export default function WritePrescription() {
 
                 {/* Instructions */}
                 <div>
-                    <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">Additional Instructions</label>
+                    <label className="text-xs text-[#94A3B8] uppercase tracking-wider mb-1.5 block">Additional Instructions</label>
                     <textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={2}
                         placeholder="Patient instructions, lifestyle advice..."
-                        className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none resize-none"
+                        className="w-full px-4 py-3 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none resize-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
 
                 <div className="flex gap-3">
-                    <motion.button onClick={handleSave} disabled={saving || !selectedPatient || !diagnosis}
+                    <motion.button onClick={handleSave} disabled={saving || !selectedPatient || medications.every(m => !m.name)}
                         whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                         className="flex-1 py-3 rounded-xl font-semibold text-sm disabled:opacity-50"
                         style={{ background: saved ? '#00D9B8' : '#7C3AED', color: '#fff' }}>
@@ -230,25 +248,25 @@ export default function WritePrescription() {
                         <div className="text-xs text-gray-500">Premium Telemedicine Platform</div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-4 text-xs">
-                        <div><strong>Patient:</strong> {selectedPatient?.patient_name || '—'}</div>
-                        <div><strong>Doctor:</strong> {user.name}</div>
+                        <div><strong>Patient:</strong> {selectedPatient?.userId ? `${selectedPatient.userId.firstName} ${selectedPatient.userId.lastName}` : (selectedPatient?.full_name || '—')}</div>
+                        <div><strong>Doctor:</strong> {doctorFullName}</div>
                         <div><strong>Date:</strong> {new Date().toLocaleDateString()}</div>
                     </div>
                     <div className="mb-3 text-xs"><strong>Diagnosis:</strong> {diagnosis || '—'}</div>
                     <div className="mb-3">
                         <strong className="text-xs">Medications:</strong>
                         <div className="mt-1 space-y-1">
-                            {medications.filter(m => m.drug_name).map((m, i) => (
+                            {medications.filter(m => m.name).map((m, i) => (
                                 <div key={i} className="text-xs bg-gray-50 p-2 rounded">
-                                    <strong>{m.drug_name}</strong> — {m.dosage} — {m.frequency} — {m.duration}
+                                    <strong>{m.name}</strong> — {m.dosage} — {m.frequency} — {m.duration}
                                 </div>
                             ))}
-                            {medications.every(m => !m.drug_name) && <div className="text-xs text-gray-400">No medications added</div>}
+                            {medications.every(m => !m.name) && <div className="text-xs text-gray-400">No medications added</div>}
                         </div>
                     </div>
                     {instructions && <div className="text-xs mb-3"><strong>Instructions:</strong> {instructions}</div>}
                     <div className="text-xs pt-3 mt-3" style={{ borderTop: '1px solid #e5e7eb' }}>
-                        <div>Signed: {user.name}</div>
+                        <div>Signed: {doctorFullName}</div>
                         <div className="text-gray-400">SHA-256: {`sha256:${Math.random().toString(36).slice(2, 10)}...`}</div>
                     </div>
                 </div>

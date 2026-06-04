@@ -7,7 +7,8 @@ const prescriptionService = require('../services/prescriptionService');
 exports.createPrescription = async (req, res) => {
   try {
     const { patientId, appointmentId, medicationsData, instructions } = req.body;
-    const doctorUserId = req.user.id;
+    const doctorUserId = req.user.userId;
+    console.log(`[CREATE_PRESCRIPTION] Doctor: ${doctorUserId}, Patient: ${patientId}`);
 
     // 1. Get Doctor info
     const doctor = await Doctor.findOne({ userId: doctorUserId });
@@ -26,24 +27,28 @@ exports.createPrescription = async (req, res) => {
       prescriptionId: 'temp_id', // Will update after save
       patientName: `${patientUser.firstName} ${patientUser.lastName}`,
       doctorName: `${doctorUser.firstName} ${doctorUser.lastName}`,
-      doctorLicense: doctor.licenseNumber,
+      doctorLicense: doctor.licenseId,
       issuedAt: new Date(),
       medications: JSON.parse(medicationsData),
       instructions
     };
 
     // 4. Generate PDF hash and signature
+    const issuedAtDate = new Date();
+    prescriptionData.issuedAt = issuedAtDate;
+    
     const { hash } = await prescriptionService.generatePrescription(prescriptionData);
 
     // 5. Save to Database
     const prescription = new Prescription({
       patientId,
       doctorId: doctor._id,
-      appointmentId,
+      appointmentId: appointmentId || undefined,
       medicationsData,
       instructions,
-      digitalSignature: hash, // Using hash as digital signature for this demo
-      qrCodeHash: hash
+      digitalSignature: hash, 
+      qrCodeHash: hash,
+      createdAt: issuedAtDate
     });
 
     await prescription.save();
@@ -78,7 +83,7 @@ exports.downloadPrescription = async (req, res) => {
       prescriptionId: prescription._id,
       patientName: `${patientUser.firstName} ${patientUser.lastName}`,
       doctorName: `${doctorUser.firstName} ${doctorUser.lastName}`,
-      doctorLicense: prescription.doctorId.licenseNumber,
+      doctorLicense: prescription.doctorId.licenseId,
       issuedAt: prescription.createdAt,
       medications: JSON.parse(prescription.medicationsData),
       instructions: prescription.instructions
@@ -117,7 +122,7 @@ exports.verifyPrescription = async (req, res) => {
       prescriptionId: prescription._id,
       patientName: `${patientUser.firstName} ${patientUser.lastName}`,
       doctorName: `${doctorUser.firstName} ${doctorUser.lastName}`,
-      doctorLicense: prescription.doctorId.licenseNumber,
+      doctorLicense: prescription.doctorId.licenseId,
       issuedAt: prescription.createdAt,
       medications: JSON.parse(prescription.medicationsData),
       instructions: prescription.instructions
@@ -143,3 +148,44 @@ exports.verifyPrescription = async (req, res) => {
     res.status(500).json({ message: 'Verification error', error: error.message });
   }
 };
+
+exports.getDoctorPrescriptions = async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({ userId: req.user.userId });
+    if (!doctor) return res.status(404).json({ message: 'Doctor profile not found' });
+
+    const prescriptions = await Prescription.find({ doctorId: doctor._id })
+      .populate({ path: 'patientId', populate: { path: 'userId', select: 'firstName lastName email' } })
+      .sort({ createdAt: -1 });
+    res.json(prescriptions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getPatientPrescriptions = async (req, res) => {
+  try {
+    const patient = await Patient.findOne({ userId: req.user.userId });
+    if (!patient) return res.status(404).json({ message: 'Patient profile not found' });
+
+    const prescriptions = await Prescription.find({ patientId: patient._id })
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName email specialization' } })
+      .sort({ createdAt: -1 });
+    res.json(prescriptions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getAllPrescriptions = async (req, res) => {
+  try {
+    const prescriptions = await Prescription.find({})
+      .populate({ path: 'doctorId', populate: { path: 'userId', select: 'firstName lastName email' } })
+      .populate({ path: 'patientId', populate: { path: 'userId', select: 'firstName lastName email' } })
+      .sort({ createdAt: -1 });
+    res.json(prescriptions);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

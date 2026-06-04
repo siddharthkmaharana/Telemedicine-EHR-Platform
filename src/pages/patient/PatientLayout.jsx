@@ -25,7 +25,7 @@ export default function PatientLayout() {
             navItems={NAV_ITEMS}
             accentColor="#F59E0B"
             role="patient"
-            title={`${greeting}, ${user.name?.split(' ')[0]} 👋`}
+            title={`${greeting}, ${user.firstName} 👋`}
             subtitle="Patient Portal"
         >
             <Outlet />

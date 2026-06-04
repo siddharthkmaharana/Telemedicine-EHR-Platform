@@ -11,7 +11,7 @@ const ConsultationRoom = () => {
   useEffect(() => {
     const fetchToken = async () => {
       try {
-        const response = await apiClient.get(`/api/telehealth/token/${appointmentId}`);
+        const response = await apiClient.get(`/telehealth/token/${appointmentId}`);
         setRoomToken(response.data.token);
       } catch (err) {
         setError(err.response?.data?.message || "Failed to join room");

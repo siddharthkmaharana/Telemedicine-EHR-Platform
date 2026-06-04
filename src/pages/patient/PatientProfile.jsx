@@ -56,7 +56,7 @@ export default function PatientProfile() {
                     </div>
                     <div>
                         <div className="text-lg font-bold text-[#F1F5F9]">{patient?.userId?.firstName} {patient?.userId?.lastName}</div>
-                        <div className="text-sm text-[#64748B]">{patient?.userId?.email}</div>
+                        <div className="text-sm text-[#94A3B8]">{patient?.userId?.email}</div>
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@ export default function PatientProfile() {
                         { label: 'Phone', key: 'phone', type: 'tel' },
                     ].map(field => (
                         <div key={field.key}>
-                            <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">{field.label}</label>
+                            <label className="text-xs text-[#94A3B8] uppercase tracking-wider mb-1.5 block">{field.label}</label>
                             {field.type === 'select' ? (
                                 <select value={patient?.[field.key] || ''} onChange={e => setPatient(p => ({ ...p, [field.key]: e.target.value }))}
                                     className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
@@ -80,16 +80,16 @@ export default function PatientProfile() {
                                 </select>
                             ) : (
                                 <input type={field.type} value={patient?.[field.key] || ''} onChange={e => setPatient(p => ({ ...p, [field.key]: e.target.value }))}
-                                    className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                                    className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                             )}
                         </div>
                     ))}
                 </div>
                 <div>
-                    <label className="text-xs text-[#64748B] uppercase tracking-wider mb-1.5 block">Allergies (comma separated)</label>
+                    <label className="text-xs text-[#94A3B8] uppercase tracking-wider mb-1.5 block">Allergies (comma separated)</label>
                     <input type="text" value={patient?.allergies?.join(', ') || ''} onChange={e => setPatient(p => ({ ...p, allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
-                        className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                        className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
             </div>
@@ -99,13 +99,13 @@ export default function PatientProfile() {
                 <h3 className="text-sm font-semibold text-[#F1F5F9] uppercase tracking-wider">Emergency Contact</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-xs text-[#64748B] mb-1.5 block">Name</label>
+                        <label className="text-xs text-[#94A3B8] mb-1.5 block">Name</label>
                         <input type="text" value={patient?.emergencyContactName || ''} onChange={e => setPatient(p => ({ ...p, emergencyContactName: e.target.value }))}
                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                     </div>
                     <div>
-                        <label className="text-xs text-[#64748B] mb-1.5 block">Phone</label>
+                        <label className="text-xs text-[#94A3B8] mb-1.5 block">Phone</label>
                         <input type="tel" value={patient?.emergencyContactPhone || ''} onChange={e => setPatient(p => ({ ...p, emergencyContactPhone: e.target.value }))}
                             className="w-full px-3 py-2.5 rounded-xl text-sm text-[#F1F5F9] outline-none"
                             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
@@ -119,7 +119,7 @@ export default function PatientProfile() {
                     <Shield size={16} color="#00D9B8" />
                     <div className="flex-1">
                         <div className="text-sm font-medium text-[#F1F5F9]">Account Security</div>
-                        <div className="text-xs text-[#64748B] mt-0.5 flex items-center gap-2">
+                        <div className="text-xs text-[#94A3B8] mt-0.5 flex items-center gap-2">
                             <Clock size={11} />
                             Last login: {new Date(user.loginTime || Date.now()).toLocaleString()}
                         </div>

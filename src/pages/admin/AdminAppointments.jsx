@@ -18,7 +18,7 @@ export default function AdminAppointments() {
 
     const cancelAppointment = async (id) => {
         try {
-            await apiClient.put(`/appointments/${id}`, { status: 'cancelled' });
+            await apiClient.put(`/appointments/${id}/status`, { status: 'cancelled' });
             setAppointments(a => a.map(appt => appt._id === id ? { ...appt, status: 'cancelled' } : appt));
             setSelected(null);
         } catch (err) {
@@ -39,9 +39,9 @@ export default function AdminAppointments() {
         <div className="space-y-6">
             <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 min-w-48">
-                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" />
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by patient or doctor..."
-                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#64748B] outline-none"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-[#F1F5F9] placeholder-[#94A3B8] outline-none"
                         style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }} />
                 </div>
                 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
@@ -56,14 +56,23 @@ export default function AdminAppointments() {
             {loading ? (
                 <div className="card-surface h-48 shimmer" />
             ) : filtered.length === 0 ? (
-                <div className="card-surface"><EmptyState title="No Appointments Found" message="Appointments will appear here" color="teal" /></div>
+                <div className="card-surface">
+                    <EmptyState 
+                        icon={Search} 
+                        title="No Appointments Found" 
+                        message="Appointments will appear here once booked" 
+                        color="teal" 
+                        action={null} 
+                        actionLabel="" 
+                    />
+                </div>
             ) : (
                 <div className="card-surface overflow-x-auto">
                     <table className="w-full min-w-[700px]">
                         <thead>
                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                                 {['Patient', 'Doctor', 'Date & Time', 'Specialization', 'Status', 'Actions'].map(h => (
-                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#64748B]">{h}</th>
+                                    <th key={h} className="text-left px-5 py-4 text-xs font-medium uppercase tracking-wider text-[#94A3B8]">{h}</th>
                                 ))}
                             </tr>
                         </thead>
@@ -76,9 +85,9 @@ export default function AdminAppointments() {
                                         style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
                                         className="hover:bg-[rgba(255,255,255,0.02)] transition-colors">
                                         <td className="px-5 py-4 text-sm font-medium text-[#F1F5F9]">{patientName}</td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{doctorName}</td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{new Date(appt.startTime).toLocaleString()}</td>
-                                        <td className="px-5 py-4 text-sm text-[#64748B]">{appt.doctorId?.specialization || 'N/A'}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{doctorName}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{new Date(appt.startTime).toLocaleString()}</td>
+                                        <td className="px-5 py-4 text-sm text-[#94A3B8]">{appt.doctorId?.specialization || 'N/A'}</td>
                                         <td className="px-5 py-4"><StatusBadge status={appt.status} /></td>
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-2">
@@ -112,7 +121,7 @@ export default function AdminAppointments() {
                             className="glass-elevated rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-5">
                                 <h3 className="text-base font-bold text-[#F1F5F9]">Appointment Details</h3>
-                                <button onClick={() => setSelected(null)}><X size={18} color="#64748B" /></button>
+                                <button onClick={() => setSelected(null)}><X size={18} color="#94A3B8" /></button>
                             </div>
                             <div className="space-y-3 text-sm">
                                 {(() => {
@@ -127,13 +136,13 @@ export default function AdminAppointments() {
                                         { label: 'Room Token', value: selected.roomToken ? selected.roomToken.slice(0, 20) + '...' : 'N/A' },
                                     ].map(item => (
                                         <div key={item.label} className="flex justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                                            <span className="text-[#64748B]">{item.label}</span>
+                                            <span className="text-[#94A3B8]">{item.label}</span>
                                             <span className="font-medium text-[#F1F5F9] text-right max-w-[60%] truncate">{item.value}</span>
                                         </div>
                                     ));
                                 })()}
                                 <div className="flex justify-between py-2 items-center">
-                                    <span className="text-[#64748B]">Status</span>
+                                    <span className="text-[#94A3B8]">Status</span>
                                     <StatusBadge status={selected.status} />
                                 </div>
                             </div>

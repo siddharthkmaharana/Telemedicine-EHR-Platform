@@ -20,7 +20,7 @@ export default function EmptyState({ icon: Icon, title, message, action, actionL
                 {Icon && <Icon size={28} style={{ color: c.text }} />}
             </div>
             <h3 className="text-lg font-semibold text-[#F1F5F9] mb-2">{title}</h3>
-            <p className="text-sm text-[#64748B] max-w-xs leading-relaxed mb-6">{message}</p>
+            <p className="text-sm text-[#94A3B8] max-w-xs leading-relaxed mb-6">{message}</p>
             {action && (
                 <button
                     onClick={action}

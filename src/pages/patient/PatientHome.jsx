@@ -20,17 +20,22 @@ export default function PatientHome() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [apptsRes, rxsRes, patientsRes] = await Promise.all([
-                    apiClient.get('/appointments/patient/me'),
-                    apiClient.get('/prescriptions/patient/me'),
-                    apiClient.get(`/patients/${user.userId || ''}`),
-                ]);
-                setAppointments(apptsRes.data);
-                setPrescriptions(rxsRes.data);
-                setPatient(patientsRes.data);
+                // Fetch independently to prevent one failure from blocking the others
+                apiClient.get('/appointments/patient/me')
+                    .then(res => setAppointments(res.data))
+                    .catch(e => console.error("Appointments fetch failed", e));
+                    
+                apiClient.get('/prescriptions/patient/me')
+                    .then(res => setPrescriptions(res.data))
+                    .catch(e => console.error("Prescriptions fetch failed", e));
+                    
+                apiClient.get('/patients/me')
+                    .then(res => setPatient(res.data))
+                    .catch(e => console.error("Patient profile fetch failed", e));
+                
                 setLoading(false);
             } catch (err) {
-                console.error("Failed to fetch patient data", err);
+                console.error("Dashboard fetch generic error", err);
                 setLoading(false);
             }
         };
@@ -60,7 +65,10 @@ export default function PatientHome() {
                 {/* Upcoming Appointments */}
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-base font-semibold text-[#F1F5F9]">Upcoming Appointments</h2>
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <div className="w-1.5 h-6 bg-[#F59E0B] rounded-full"></div>
+                            Upcoming Appointments
+                        </h2>
                         <button onClick={() => navigate('/patient/book')}
                             className="text-xs font-medium text-[#F59E0B] hover:underline">Book New</button>
                     </div>
@@ -80,9 +88,29 @@ export default function PatientHome() {
                         </div>
                     )}
 
+                    {/* Past Appointments */}
+                    <div className="flex items-center justify-between mt-8">
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <div className="w-1.5 h-6 bg-[#7C3AED] rounded-full"></div>
+                            Appointment History
+                        </h2>
+                    </div>
+                    {appointments.filter(a => ['completed', 'cancelled', 'no-show'].includes(a.status)).length === 0 ? (
+                        <div className="text-xs text-[#94A3B8] p-4 text-center card-surface border-dashed">No past appointments found</div>
+                    ) : (
+                        <div className="space-y-3">
+                            {appointments.filter(a => ['completed', 'cancelled', 'no-show'].includes(a.status)).map((appt, i) => (
+                                <AppointmentCard key={appt._id} appointment={appt} index={i} perspective="patient" onJoin={null} />
+                            ))}
+                        </div>
+                    )}
+
                     {/* Recent Prescriptions */}
                     <div className="flex items-center justify-between mt-6">
-                        <h2 className="text-base font-semibold text-[#F1F5F9]">Recent Prescriptions</h2>
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                            <div className="w-1.5 h-6 bg-[#F59E0B] rounded-full"></div>
+                            Recent Prescriptions
+                        </h2>
                         <button onClick={() => navigate('/patient/prescriptions')} className="text-xs font-medium text-[#F59E0B] hover:underline">View All</button>
                     </div>
                     {recentRx.length === 0 && !loading ? (
@@ -95,8 +123,8 @@ export default function PatientHome() {
                                 <motion.div key={rx._id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: i * 0.1 }} className="card-surface p-4 flex items-center justify-between">
                                     <div>
-                                        <div className="text-sm font-medium text-[#F1F5F9]">{rx.diagnosis_summary || 'General Prescription'}</div>
-                                        <div className="text-xs text-[#64748B] mt-0.5">{rx.doctorId?.userId?.firstName} {rx.doctorId?.userId?.lastName} · {new Date(rx.createdAt).toLocaleDateString()}</div>
+                                        <div className="text-sm font-medium text-[#F1F5F9]">{rx.diagnosisSummary || rx.instructions?.split('.')[0] || 'General Prescription'}</div>
+                                        <div className="text-xs text-[#94A3B8] mt-0.5">{rx.doctorId?.userId?.firstName} {rx.doctorId?.userId?.lastName} · {new Date(rx.createdAt).toLocaleDateString()}</div>
                                     </div>
                                     <button className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all hover:scale-105"
                                         style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>
@@ -108,39 +136,42 @@ export default function PatientHome() {
                     )}
                 </div>
 
-                {/* Health Summary */}
-                <div className="card-surface p-6 h-fit">
-                    <h2 className="text-base font-semibold text-[#F1F5F9] mb-4">Health Summary</h2>
+                {/* Health Summary Section */}
+            <div className="card-surface p-6">
+                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                    <div className="w-1.5 h-6 bg-[#00D9B8] rounded-full"></div>
+                    Health Summary
+                </h2>
                     <div className="space-y-4">
                         <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(239,68,68,0.08)' }}>
                             <Heart size={16} color="#EF4444" />
                             <div>
-                                <div className="text-xs text-[#64748B]">Blood Group</div>
-                                <div className="text-sm font-semibold text-[#F1F5F9]">{patient?.blood_group || 'O+'}</div>
+                                <div className="text-xs text-[#94A3B8]">Blood Group</div>
+                                <div className="text-sm font-semibold text-[#F1F5F9]">{patient?.bloodGroup || 'O+'}</div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(245,158,11,0.08)' }}>
                             <AlertTriangle size={16} color="#F59E0B" />
                             <div>
-                                <div className="text-xs text-[#64748B]">Allergies</div>
+                                <div className="text-xs text-[#94A3B8]">Allergies</div>
                                 <div className="text-sm font-semibold text-[#F1F5F9]">
                                     {patient?.allergies?.join(', ') || 'Penicillin'}
                                 </div>
                             </div>
                         </div>
                         <div className="pt-2">
-                            <div className="text-xs text-[#64748B] uppercase tracking-wider mb-3">Last Vitals</div>
+                            <div className="text-xs text-[#94A3B8] uppercase tracking-wider mb-3">Last Vitals</div>
                             <div className="grid grid-cols-2 gap-2">
                                 {[
-                                    { label: 'BP', value: patient?.last_vitals_bp || '120/80' },
-                                    { label: 'Pulse', value: patient?.last_vitals_pulse || '72 bpm' },
-                                    { label: 'Temp', value: patient?.last_vitals_temp || '98.6°F' },
-                                    { label: 'Weight', value: patient?.last_vitals_weight || '70 kg' },
+                                    { label: 'BP', value: patient?.vitals?.bp || '120/80' },
+                                    { label: 'Pulse', value: patient?.vitals?.pulse || '72 bpm' },
+                                    { label: 'Temp', value: patient?.vitals?.temp || '98.6°F' },
+                                    { label: 'Weight', value: patient?.vitals?.weight || '70 kg' },
                                 ].map(v => (
                                     <div key={v.label} className="p-2.5 rounded-lg text-center"
                                         style={{ background: 'rgba(255,255,255,0.04)' }}>
                                         <div className="text-lg font-bold text-[#00D9B8]">{v.value}</div>
-                                        <div className="text-xs text-[#64748B]">{v.label}</div>
+                                        <div className="text-xs text-[#94A3B8]">{v.label}</div>
                                     </div>
                                 ))}
                             </div>
