@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Pill, FileText, Heart, AlertTriangle, Activity } from 'lucide-react';
+import { Calendar, Clock, Pill, FileText, Heart, AlertTriangle } from 'lucide-react';
 import StatCard from '@/components/medisync/StatCard';
 import AppointmentCard from '@/components/medisync/AppointmentCard';
 import EmptyState from '@/components/medisync/EmptyState';

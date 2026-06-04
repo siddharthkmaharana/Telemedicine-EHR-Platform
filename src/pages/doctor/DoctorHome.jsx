@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Calendar, Users, FileText, Clock, CheckCircle, XCircle } from 'lucide-react';
 import StatCard from '@/components/medisync/StatCard';
 import StatusBadge from '@/components/medisync/StatusBadge';

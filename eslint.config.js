@@ -3,6 +3,7 @@ import pluginJs from "@eslint/js";
 import pluginReact from "eslint-plugin-react";
 import pluginReactHooks from "eslint-plugin-react-hooks";
 import pluginUnusedImports from "eslint-plugin-unused-imports";
+import pluginSecurity from "eslint-plugin-security";
 
 export default [
     {
@@ -57,4 +58,17 @@ export default [
             "react-hooks/rules-of-hooks": "error",
         },
     },
+    {
+        files: [
+            "server/**/*.js",
+            "signaling-server/**/*.js"
+        ],
+        plugins: {
+            security: pluginSecurity,
+        },
+        rules: {
+            ...pluginSecurity.configs.recommended.rules,
+            "security/detect-object-injection": "off"
+        }
+    }
 ];

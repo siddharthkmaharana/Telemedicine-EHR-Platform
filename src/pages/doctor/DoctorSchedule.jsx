@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import { format, addDays, startOfWeek } from 'date-fns';
 import apiClient from '@/lib/api';

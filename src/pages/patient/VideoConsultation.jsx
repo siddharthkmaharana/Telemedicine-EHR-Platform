@@ -4,7 +4,6 @@ import { Video, Mic, MicOff, VideoOff, PhoneOff, MessageSquare, Clock, Wifi } fr
 import apiClient from '@/lib/api';
 import StatusBadge from '@/components/medisync/StatusBadge';
 import EmptyState from '@/components/medisync/EmptyState';
-import { formatDistanceToNow, parseISO } from 'date-fns';
 
 function VideoRoom({ appointment, onLeave }) {
     const [muted, setMuted] = useState(false);

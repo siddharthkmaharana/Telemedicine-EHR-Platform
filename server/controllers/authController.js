@@ -16,19 +16,19 @@ exports.register = async (req, res) => {
 
     // Create profile based on role
     if (role === 'doctor') {
-      const doctor = new Doctor({
+      const Doctor = require('../models/Doctor');
+      await new Doctor({
         userId: user._id,
-        specialization: specialization || 'General Medicine',
-        licenseId: licenseId || `LIC-${Date.now()}`,
-        consultationFee: consultationFee || 500,
-        experienceYears: experienceYears || 0
-      });
-      await doctor.save();
+        specialization: req.body.specialization || 'General Medicine',
+        licenseNumber: req.body.licenseId || 'N/A',
+        consultationFee: req.body.consultationFee || 500,
+        experienceYears: req.body.experienceYears || 1
+      }).save();
     } else if (role === 'patient') {
-      const patient = new Patient({
+      const Patient = require('../models/Patient');
+      await new Patient({
         userId: user._id
-      });
-      await patient.save();
+      }).save();
     }
 
     const token = jwt.sign(
@@ -71,11 +71,12 @@ exports.login = async (req, res) => {
       success: true, 
       token, 
       user: {
-        _id: user._id,
-        email: user.email,
+        userId: user._id,
         role: user.role,
+        name: `${user.firstName} ${user.lastName}`,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        email: user.email
       }
     });
   } catch (error) {

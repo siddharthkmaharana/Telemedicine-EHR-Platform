@@ -17,7 +17,11 @@ const limiter = rateLimit({
 // app.use('/api/', limiter);
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Request Logger
@@ -33,6 +37,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/patients', require('./routes/patientRoutes'));
 app.use('/api/doctors', require('./routes/doctorRoutes'));
 app.use('/api/records', require('./routes/recordRoutes'));

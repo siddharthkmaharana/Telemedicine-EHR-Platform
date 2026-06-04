@@ -8,18 +8,30 @@ const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   console.error('FATAL ERROR: MONGODB_URI is not defined.');
   process.exit(1);
+} else {
+  console.log('Using MONGODB_URI:', MONGODB_URI.replace(/:([^:@]{1,})@/, ':****@'));
 }
 
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI)
-  .then(() => {
-    console.log('Successfully connected to MongoDB.');
-    // Start the server only after successful database connection
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+// Connect to MongoDB with retry logic
+const connectWithRetry = (retries = 5) => {
+  console.log(`Connecting to MongoDB... (Retries left: ${retries})`);
+  mongoose.connect(MONGODB_URI)
+    .then(() => {
+      console.log('Successfully connected to MongoDB.');
+      app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB:', err.message);
+      if (retries > 0) {
+        console.log('Retrying in 5 seconds...');
+        setTimeout(() => connectWithRetry(retries - 1), 5000);
+      } else {
+        console.error('All retry attempts failed. Exiting.');
+        process.exit(1);
+      }
     });
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB:', err);
-    process.exit(1);
-  });
+};
+
+connectWithRetry();
